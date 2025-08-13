@@ -129,7 +129,7 @@ void FlightChart::appendDataChart(parametrs &data)
         g->addData(tx, spec->getter(data));
         // ❌ не видаляємо старі точки
 
-        qDebug() << "Graph" << key << "points:" << g->dataCount();
+        // qDebug() << "Graph" << key << "points:" << g->dataCount();
 
     }
 

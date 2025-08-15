@@ -23,31 +23,31 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     // ------------------ ГРАФІК ------------------
     flightChart = new FlightChart;
 
-    // ------------------ КНОПКИ ------------------
-    QVBoxLayout *toolLayout = new QVBoxLayout;
-    toolLayout->setSpacing(4);
-    toolLayout->setContentsMargins(4, 4, 4, 4);
+    // // ------------------ КНОПКИ ------------------
+    // QVBoxLayout *toolLayout = new QVBoxLayout;
+    // toolLayout->setSpacing(4);
+    // toolLayout->setContentsMargins(4, 4, 4, 4);
 
-    QPushButton *themeBtn = new QPushButton("Тема");
-    QPushButton *zoomBtn = new QPushButton("Автозум");
-    QRadioButton *dragBtn = new QRadioButton("Рука");
-    QRadioButton *rectBtn = new QRadioButton("Виділення");
-    QPushButton *clearBtn = new QPushButton("Очистити");
-    liveBtn = new QPushButton("Live 100"); // toggle
+    // QPushButton *themeBtn = new QPushButton("Тема");
+    // QPushButton *zoomBtn = new QPushButton("Автозум");
+    // QRadioButton *dragBtn = new QRadioButton("Рука");
+    // QRadioButton *rectBtn = new QRadioButton("Виділення");
+    // QPushButton *clearBtn = new QPushButton("Очистити");
+    // liveBtn = new QPushButton("Live 100"); // toggle
 
-    dragBtn->setChecked(true);
+    // dragBtn->setChecked(true);
 
-    toolLayout->addWidget(themeBtn);
-    toolLayout->addWidget(zoomBtn);
-    toolLayout->addWidget(dragBtn);
-    toolLayout->addWidget(rectBtn);
-    toolLayout->addSpacing(10);
-    toolLayout->addWidget(new QLabel("Поля:"));
-    toolLayout->addWidget(liveBtn);
-    toolLayout->addWidget(clearBtn);
+    // toolLayout->addWidget(themeBtn);
+    // toolLayout->addWidget(zoomBtn);
+    // toolLayout->addWidget(dragBtn);
+    // toolLayout->addWidget(rectBtn);
+    // toolLayout->addSpacing(10);
+    // toolLayout->addWidget(new QLabel("Поля:"));
+    // toolLayout->addWidget(liveBtn);
+    // toolLayout->addWidget(clearBtn);
 
-    QWidget *toolWidget = new QWidget;
-    toolWidget->setLayout(toolLayout);
+    // QWidget *toolWidget = new QWidget;
+    // toolWidget->setLayout(toolLayout);
 
     // ------------------ СКРОЛ ЧЕКБОКСІВ ------------------
     QWidget *checkboxContent = new QWidget;
@@ -73,7 +73,7 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     QVBoxLayout *leftPanelLayout = new QVBoxLayout;
     leftPanelLayout->setContentsMargins(2, 2, 2, 2);
     leftPanelLayout->setSpacing(5);
-    leftPanelLayout->addWidget(toolWidget);
+    // leftPanelLayout->addWidget(toolWidget);
     leftPanelLayout->addWidget(scrollArea, 1);
 
     QWidget *leftPanel = new QWidget;
@@ -84,30 +84,30 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     mainLayout->addWidget(leftPanel);
     mainLayout->addWidget(flightChart, 1);
 
-    // ------------------ КОНЕКТИ ------------------
-    connect(themeBtn, &QPushButton::clicked, this, &ChartPanelWidget::toggleTheme);
-    connect(zoomBtn, &QPushButton::clicked, this, &ChartPanelWidget::autoZoom);
-    connect(clearBtn, &QPushButton::clicked, this, &ChartPanelWidget::clearSelection);
+    // // ------------------ КОНЕКТИ ------------------
+    // connect(themeBtn, &QPushButton::clicked, this, &ChartPanelWidget::toggleTheme);
+    // connect(zoomBtn, &QPushButton::clicked, this, &ChartPanelWidget::autoZoom);
+    // connect(clearBtn, &QPushButton::clicked, this, &ChartPanelWidget::clearSelection);
 
-    connect(dragBtn, &QRadioButton::toggled, this, [=](bool checked){
-        if (checked) {
-            flightChart->getPlot()->setSelectionRectMode(QCP::srmNone);
-            flightChart->getPlot()->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes);
-        }
-    });
-    connect(rectBtn, &QRadioButton::toggled, this, [=](bool checked){
-        if (checked) {
-            flightChart->getPlot()->setSelectionRectMode(QCP::srmZoom);
-            flightChart->getPlot()->setInteractions(QCP::iRangeZoom | QCP::iSelectPlottables | QCP::iSelectAxes);
-        }
-    });
+    // connect(dragBtn, &QRadioButton::toggled, this, [=](bool checked){
+    //     if (checked) {
+    //         flightChart->getPlot()->setSelectionRectMode(QCP::srmNone);
+    //         flightChart->getPlot()->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes);
+    //     }
+    // });
+    // connect(rectBtn, &QRadioButton::toggled, this, [=](bool checked){
+    //     if (checked) {
+    //         flightChart->getPlot()->setSelectionRectMode(QCP::srmZoom);
+    //         flightChart->getPlot()->setInteractions(QCP::iRangeZoom | QCP::iSelectPlottables | QCP::iSelectAxes);
+    //     }
+    // });
 
-    connect(liveBtn, &QPushButton::clicked, this, [this]{
-        const bool on = !flightChart->liveModeEnabled();
-        flightChart->setLiveModeEnabled(on);
-        liveBtn->setText(on ? "Full history" : "Live 100");
-        scheduleReplot();
-    });
+    // connect(liveBtn, &QPushButton::clicked, this, [this]{
+    //     const bool on = !flightChart->liveModeEnabled();
+    //     flightChart->setLiveModeEnabled(on);
+    //     liveBtn->setText(on ? "Full history" : "Live 100");
+    //     scheduleReplot();
+    // });
 
     mLastReplot.start();
 }
@@ -183,11 +183,11 @@ void ChartPanelWidget::toggleTheme()
         flightChart->darkTheme();
 
     darkTheme = !darkTheme;
-    flightChart->getPlot()->replot();
+    flightChart->getPlot()->replot(QCustomPlot::rpQueuedReplot);;
 }
 
 void ChartPanelWidget::autoZoom()
 {
     flightChart->getPlot()->rescaleAxes();
-    flightChart->getPlot()->replot();
+    flightChart->getPlot()->replot(QCustomPlot::rpQueuedReplot);
 }

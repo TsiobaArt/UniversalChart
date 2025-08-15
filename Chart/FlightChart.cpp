@@ -9,6 +9,9 @@
 FlightChart::FlightChart(QWidget *parent)
     : QWidget{parent}
 {
+    //  // [OPTIM]
+    // QCPGraph *graph = customPlot->addGraph();
+    // graph->setAdaptiveSampling(true); // завжди вкл
     QVBoxLayout *layout = new QVBoxLayout(this);
     customPlot = new QCustomPlot(this);
     layout->addWidget(customPlot);
@@ -16,10 +19,19 @@ FlightChart::FlightChart(QWidget *parent)
 
     // Оптимізації рендера
     customPlot->setPlottingHints(QCP::phFastPolylines | QCP::phCacheLabels);
-    customPlot->setNotAntialiasedElements(QCP::aePlottables | QCP::aeScatters | QCP::aeFills);
+    customPlot->setNotAntialiasedElements(QCP::aePlottables | QCP::aeScatters | QCP::aeFills);    
     customPlot->setNoAntialiasingOnDrag(true);
     customPlot->xAxis->grid()->setSubGridVisible(false);
     customPlot->yAxis->grid()->setSubGridVisible(false);
+    // customPlot->xAxis->grid()->setVisible(false);
+    // customPlot->yAxis->grid()->setVisible(false);
+
+
+
+    // [OPTIM] Прибрати хіту-тести по легенді (менше навантаження)
+    customPlot->legend->setSelectableParts(QCPLegend::spNone);
+    // [OPTIM] Зробити легенду прозорою (менше малювання фону)
+    customPlot->legend->setBrush(Qt::NoBrush);
 
     customPlot->legend->setVisible(true);
     customPlot->legend->setBrush(QBrush(Qt::white));
@@ -33,6 +45,12 @@ FlightChart::FlightChart(QWidget *parent)
         QCP::iSelectAxes |
         QCP::iRangeZoom
     );
+
+    // // [OPTIM] Тільки горизонтальний зум/drag
+    // customPlot->axisRect()->setRangeDrag(Qt::Horizontal);
+    // customPlot->axisRect()->setRangeZoom(Qt::Horizontal);
+
+
 }
 
 FlightChart::~FlightChart() {}
@@ -97,7 +115,6 @@ void FlightChart::lightTheme()
 void FlightChart::clearPlot()
 {
     customPlot->clearGraphs();
-    customPlot->legend->clearItems();
     graphKeyByPtr.clear();
     customPlot->replot();
 }
@@ -127,7 +144,6 @@ void FlightChart::appendDataChart(parametrs &data)
         if (!spec) continue;
 
         g->addData(tx, spec->getter(data));
-        // ❌ не видаляємо старі точки
 
         // qDebug() << "Graph" << key << "points:" << g->dataCount();
 
@@ -163,6 +179,7 @@ void FlightChart::plotSelectedFields(const QStringList &keys)
         pen.setWidth(2);
         graph->setPen(pen);
 
+        // [OPTIM] Adaptive sampling завжди вкл
         graph->setAdaptiveSampling(true);
 
         QVector<double> x, y;
@@ -173,6 +190,8 @@ void FlightChart::plotSelectedFields(const QStringList &keys)
             y.append(spec->getter(d));
         }
         graph->setData(x, y);
+
+
     }
 
     customPlot->legend->setVisible(true);

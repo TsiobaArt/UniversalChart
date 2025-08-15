@@ -21,7 +21,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::generateTestData()
+void MainWindow::generateTestData() // ------------ TestData
 {
     static double t = 0.0;
     static const double dt = 0.1;

@@ -1,5 +1,10 @@
 <RCC>
     <qresource prefix="/">
         <file>Chart_panel.qml</file>
+        <file>Icon/theme.svg</file>
+        <file>Icon/home.svg</file>
+        <file>Icon/update.svg</file>
+        <file>Icon/drag.svg</file>
+        <file>Icon/expand.svg</file>
     </qresource>
 </RCC>

@@ -10,10 +10,16 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Positioning PrintSupport
-  Qml QuickWidgets  Widgets   SerialPort
-  SerialBus  )
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets
+  Positioning
+  PrintSupport
+  Qml
+  QuickWidgets
+  Widgets
+  SerialPort
+  SerialBus
+  QuickControls2
+)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -27,6 +33,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         Chart/ChartPanelWidget.cpp Chart/chartpanelwidget.h Chart/Fields_lookup.h Chart/Fields_parametrs.h Chart/FieldSpec.h Chart/FlightChart.cpp Chart/flightchart.h Chart/parametrs.h Chart/qcustomplot.cpp Chart/qcustomplot.h Chart/README.md
+        Chart/resources.qrc
+        Chart/resources.qrc
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET UniversalChart APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -50,8 +58,11 @@ target_link_libraries(UniversalChart PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt6:
   Qt6::Quick
   Qt6::QuickWidgets
   Qt6::Qml
-  Qt${QT_VERSION_MAJOR}::SerialPort
-  Qt${QT_VERSION_MAJOR}::SerialBus
+  Qt${QT_VERSION_MAJOR}::Qml
+  Qt${QT_VERSION_MAJOR}::Quick
+  Qt${QT_VERSION_MAJOR}::QuickControls2
+  Qt${QT_VERSION_MAJOR}::QuickWidgets
+  Qt${QT_VERSION_MAJOR}::PrintSupport
 )
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

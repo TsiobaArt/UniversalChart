@@ -9,9 +9,6 @@
 FlightChart::FlightChart(QWidget *parent)
     : QWidget{parent}
 {
-    //  // [OPTIM]
-    // QCPGraph *graph = customPlot->addGraph();
-    // graph->setAdaptiveSampling(true); // завжди вкл
     QVBoxLayout *layout = new QVBoxLayout(this);
     customPlot = new QCustomPlot(this);
     layout->addWidget(customPlot);
@@ -45,12 +42,6 @@ FlightChart::FlightChart(QWidget *parent)
         QCP::iSelectAxes |
         QCP::iRangeZoom
     );
-
-    // // [OPTIM] Тільки горизонтальний зум/drag
-    // customPlot->axisRect()->setRangeDrag(Qt::Horizontal);
-    // customPlot->axisRect()->setRangeZoom(Qt::Horizontal);
-
-
 }
 
 FlightChart::~FlightChart() {}

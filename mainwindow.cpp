@@ -8,12 +8,16 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    panel = new ChartPanelWidget(this);   // ✅
-    setCentralWidget(panel);              // ✅
+    panel = new ChartPanelWidget(this);
+    setCentralWidget(panel);
 
     testTimer = new QTimer(this);
     connect(testTimer, &QTimer::timeout, this, &MainWindow::generateTestData);
     testTimer->start(1); // 100 Гц
+
+    // qmlPanelButt = new QQuickWidget(this);
+    // qmlPanelButt->setSource(QUrl("qrc:/Chart_panel.qml"));
+    // qmlPanelButt->setFixedHeight(48);
 }
 
 MainWindow::~MainWindow()

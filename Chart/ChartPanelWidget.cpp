@@ -18,6 +18,7 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     m_qmlTopBar->setFixedHeight(50);          // <-- фіксована висота 50
     rootLayout->addWidget(m_qmlTopBar);       // займає всю ширину віджета
 
+
     // ===== НИЖНІЙ РЯД (ТВІЙ ІСНУЮЧИЙ КОД) =====
     QHBoxLayout *mainLayout = new QHBoxLayout();
     mainLayout->setContentsMargins(0, 0, 0, 0);

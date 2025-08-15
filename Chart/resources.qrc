@@ -6,5 +6,6 @@
         <file>Icon/update.svg</file>
         <file>Icon/drag.svg</file>
         <file>Icon/expand.svg</file>
+        <file>Icon/live.svg</file>
     </qresource>
 </RCC>

@@ -41,7 +41,10 @@ FlightChart::FlightChart(QWidget *parent)
         QCP::iRangeZoom |
         QCP::iSelectAxes |
         QCP::iRangeZoom
-    );
+        );
+
+
+    // customPlot->setOpenGl(true);
 }
 
 FlightChart::~FlightChart() {}
@@ -153,7 +156,6 @@ void FlightChart::plotSelectedFields(const QStringList &keys)
 {
     customPlot->clearGraphs();
     graphKeyByPtr.clear();
-
     for (const QString &key : keys)
     {
         auto spec = findFieldByKey(key);
@@ -167,7 +169,7 @@ void FlightChart::plotSelectedFields(const QStringList &keys)
         graph->setName(title);
 
         QPen pen(spec->color);
-        pen.setWidth(2);
+        pen.setWidth(1);
         graph->setPen(pen);
 
         // [OPTIM] Adaptive sampling завжди вкл

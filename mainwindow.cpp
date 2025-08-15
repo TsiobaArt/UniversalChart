@@ -1,19 +1,17 @@
-#include "mainwindow.h"
-#include "./ui_mainwindow.h"
 #include <cmath> // для fmod
+#include "mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+
 {
-    ui->setupUi(this);
 
     panel = new ChartPanelWidget(this);
     setCentralWidget(panel);
 
-    testTimer = new QTimer(this);
-    connect(testTimer, &QTimer::timeout, this, &MainWindow::generateTestData);
-    testTimer->start(1); // 100 Гц
+    // testTimer = new QTimer(this);
+    // connect(testTimer, &QTimer::timeout, this, &MainWindow::generateTestData);
+    // testTimer->start(1); // 100 Гц
 
     // qmlPanelButt = new QQuickWidget(this);
     // qmlPanelButt->setSource(QUrl("qrc:/Chart_panel.qml"));
@@ -22,7 +20,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete ui;
 }
 
 void MainWindow::generateTestData() // ------------ TestData

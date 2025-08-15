@@ -5,12 +5,13 @@
 #include <QStringList>
 #include <QElapsedTimer>
 #include "parametrs.h"
-
+#include <QQuickWidget>
 class QCheckBox;
 class QLabel;
 class QPushButton;
 class QRadioButton;
 class FlightChart;
+
 
 class ChartPanelWidget : public QWidget
 {
@@ -31,6 +32,7 @@ private slots:
 
 private:
     void scheduleReplot();
+    QQuickWidget* m_qmlTopBar = nullptr;
 
     FlightChart *flightChart = nullptr;
     QMap<QString, QCheckBox*> checkboxes; // key -> checkbox
@@ -43,4 +45,5 @@ private:
 
     // Live кнопка
     QPushButton *liveBtn = nullptr;
+
 };

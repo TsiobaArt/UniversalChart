@@ -6,12 +6,7 @@
 #include <QRandomGenerator>
 #include <QtMath>
 #include "Chart/parametrs.h"
-#include "Chart/chartpanelwidget.h"   // ✅ замість flightchart.h
-#include <QtQuickWidgets>
-
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
+#include "Chart/chartpanelwidget.h"
 
 class MainWindow : public QMainWindow
 {
@@ -24,10 +19,8 @@ private slots:
     void generateTestData();
 
 private:
-    Ui::MainWindow *ui;
     ChartPanelWidget *panel;  // ✅ панель з графіком + чекбоксами
-    QTimer *testTimer;
-    QQuickWidget *qmlPanelButt;
+    QTimer *testTimer = nullptr;
 };
 
 #endif // MAINWINDOW_H

@@ -6,6 +6,22 @@
 #include <QElapsedTimer>
 #include "parametrs.h"
 #include <QQuickWidget>
+#include <QTimer>
+#include <QRandomGenerator>
+#include <QtMath>
+#include "parametrs.h"
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QScrollArea>
+#include <QLabel>
+#include <QCheckBox>
+#include <QSizePolicy>
+#include <QTimer>
+#include <QQmlContext>
+#include <QQuickItem>
+
 class QCheckBox;
 class QLabel;
 class QPushButton;
@@ -22,6 +38,7 @@ public:
     void setData(std::vector<parametrs> &data);
     void appendDataStep(parametrs data);
     void clearData();
+    void generateTestData();
 
 private slots:
     void onCheckboxChanged();
@@ -41,9 +58,10 @@ private:
     // throttle перемальовки
     bool mReplotScheduled = false;
     QElapsedTimer mLastReplot;
-    int mMinReplotIntervalMs = 20; //  16 мс ~60 FPS    20 мс ~50 FPS
+    int mMinReplotIntervalMs = 16; //  16 мс ~60 FPS    20 мс ~50 FPS
 
     // Live кнопка
     QPushButton *liveBtn = nullptr;
+    QTimer *testTimer = nullptr;
 
 };

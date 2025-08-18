@@ -20,7 +20,9 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(0.12, 0.12, 0.12, 1)
+        // color: Qt.rgba(0.12, 0.12, 0.12, 1)
+        // color : appWindowColor
+        color: appWindowColor
         border.color: "#333"
     }
 

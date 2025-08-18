@@ -2,67 +2,76 @@
 #include "flightchart.h"
 #include "Fields_parametrs.h"
 #include "qcustomplot.h"
-
+#include <QQmlContext>
+#include <QQuickWidget>
 
 ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     : QWidget(parent)
 {
-    // ===== ГОЛОВНИЙ ВЕРТИКАЛЬНИЙ ЛЕЙАУТ =====
-    auto *rootLayout = new QVBoxLayout(this);
-    rootLayout->setContentsMargins(0, 0, 0, 0);
-    rootLayout->setSpacing(5);
+    // ===== ГОЛОВНИЙ ГОРИЗОНТАЛЬНИЙ ЛЕЙАУТ (ЛІВО: чекбокси, ПРАВО: панель+графік) =====
+    auto *rootRow = new QHBoxLayout(this);
+    rootRow->setContentsMargins(0, 0, 0, 0);
+    rootRow->setSpacing(5);
 
-    // ===== ВЕРХНЯ QML ПАНЕЛЬ =====
-    m_qmlTopBar = new QQuickWidget(this);
-    m_qmlTopBar->setResizeMode(QQuickWidget::SizeRootObjectToView);
-    m_qmlTopBar->setFixedHeight(50);          // <-- фіксована висота 50
-    rootLayout->addWidget(m_qmlTopBar);       // займає всю ширину віджета
-
-
-    // ===== НИЖНІЙ РЯД (ТВІЙ ІСНУЮЧИЙ КОД) =====
-    QHBoxLayout *mainLayout = new QHBoxLayout();
-    mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->setSpacing(5);
-    rootLayout->addLayout(mainLayout, 1);     // тягнеться на весь залишок
-
-    // ------------------ ГРАФІК ------------------
-    flightChart = new FlightChart;
-
-    // ------------------ СКРОЛ ЧЕКБОКСІВ ------------------
+    // ------------------ ЛІВА ПАНЕЛЬ (СКРОЛ ЧЕКБОКСІВ) ------------------
     QWidget *checkboxContent = new QWidget;
     QVBoxLayout *checkboxLayout = new QVBoxLayout(checkboxContent);
     checkboxLayout->setAlignment(Qt::AlignTop);
     checkboxLayout->setSpacing(2);
-    checkboxLayout->setContentsMargins(2, 2, 2, 2);
+    checkboxLayout->setContentsMargins(6, 6, 6, 6);
 
     for (const auto &f : PARAM_FIELDS()) {
         QCheckBox *cb = new QCheckBox(f.label);
         cb->setChecked(f.defaultChecked);
+
+        // робимо чекбокси "у всю довжину" (тобто на всю доступну ширину панелі)
+        cb->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        // cb->setWordWrap(true); // якщо підписи довгі — переносимо
+
         checkboxes[f.key] = cb;
         checkboxLayout->addWidget(cb);
         connect(cb, &QCheckBox::stateChanged, this, &ChartPanelWidget::onCheckboxChanged);
     }
+    checkboxLayout->addStretch(); // щоб зверху було щільно, а низ заповнювався
 
     QScrollArea *scrollArea = new QScrollArea;
     scrollArea->setWidgetResizable(true);
     scrollArea->setWidget(checkboxContent);
-    scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    // ------------------ ЛІВА ПАНЕЛЬ ------------------
-    QVBoxLayout *leftPanelLayout = new QVBoxLayout;
-    leftPanelLayout->setContentsMargins(2, 2, 2, 2);
-    leftPanelLayout->setSpacing(5);
-    leftPanelLayout->addWidget(scrollArea, 1);
+    scrollArea->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
     QWidget *leftPanel = new QWidget;
-    leftPanel->setLayout(leftPanelLayout);
-    leftPanel->setMaximumWidth(300);
+    auto *leftPanelLayout = new QVBoxLayout(leftPanel);
+    leftPanelLayout->setContentsMargins(0, 0, 0, 0);
+    leftPanelLayout->setSpacing(0);
+    leftPanelLayout->addWidget(scrollArea, 1);
+    leftPanel->setMaximumWidth(300); // або за бажанням: setFixedWidth(280);
+
+    // ------------------ ПРАВА КОЛОНКА: ВЕРХНЯ QML ПАНЕЛЬ + ГРАФІК ------------------
+    QWidget *rightCol = new QWidget;
+    auto *rightColLayout = new QVBoxLayout(rightCol);
+    rightColLayout->setContentsMargins(0, 0, 0, 0);
+    rightColLayout->setSpacing(5);
+
+    // ===== ВЕРХНЯ QML ПАНЕЛЬ (належить тільки правій колонці з графіком) =====
+    m_qmlTopBar = new QQuickWidget(rightCol);
+    m_qmlTopBar->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    m_qmlTopBar->setFixedHeight(50);          // <-- фіксована висота 50
+
+    windowColor =   QApplication::palette().color(QPalette::Window);
+    m_qmlTopBar->rootContext()->setContextProperty("appWindowColor", windowColor);
+
+    m_qmlTopBar->setSource(QUrl(QStringLiteral("qrc:/Chart_panel.qml")));
+    // ...
+
+    // ------------------ ГРАФІК ------------------
+    flightChart = new FlightChart;
+
+    rightColLayout->addWidget(m_qmlTopBar);   // панель тільки над графіком (у правій колонці)
+    rightColLayout->addWidget(flightChart, 1);
 
     // ------------------ ЗБІР ВСЬОГО ------------------
-    mainLayout->addWidget(leftPanel);
-    mainLayout->addWidget(flightChart, 1);
-    // 1) Встановлюємо джерело QML
-    m_qmlTopBar->setSource(QUrl(QStringLiteral("qrc:/Chart_panel.qml")));
+    rootRow->addWidget(leftPanel);            // лівий стовпчик: чекбокси
+    rootRow->addWidget(rightCol, 1);          // правий стовпчик: панель+графік
 
     // --------------------------  test Даних
     testTimer = new QTimer(this);
@@ -70,22 +79,24 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     testTimer->start(1); // 100 Гц
     // --------------------------  test Даних
 
-
+    // ===== з'єднання сигналів з QML панелі (за потреби розкоментуй) =====
     // QObject *toolbarRoot = m_qmlTopBar->rootObject();
-    // if (!toolbarRoot)
-    //     return;
+    // if (toolbarRoot) {
+    //     connect(toolbarRoot, SIGNAL(themeToggle()),
+    //             this, SLOT(onTopBarThemeToggle()), Qt::UniqueConnection);
+    //     connect(toolbarRoot, SIGNAL(autoZoom()),
+    //             this, SLOT(onTopBarAutoZoom()), Qt::UniqueConnection);
+    //     connect(toolbarRoot, SIGNAL(liveToggle()),
+    //             this, SLOT(onTopBarLiveToggle()), Qt::UniqueConnection);
+    //     connect(toolbarRoot, SIGNAL(modeChanged(QString)),
+    //             this, SLOT(onTopBarModeChanged(QString)), Qt::UniqueConnection);
+    //     connect(toolbarRoot, SIGNAL(clearRequested()),
+    //             this, SLOT(onTopBarClearRequested()), Qt::UniqueConnection);
+    // }
 
-    // connect(toolbarRoot, SIGNAL(themeToggle()),
-    //         this, SLOT(onTopBarThemeToggle()), Qt::UniqueConnection);
-    // connect(toolbarRoot, SIGNAL(autoZoom()),
-    //         this, SLOT(onTopBarAutoZoom()), Qt::UniqueConnection);
-    // connect(toolbarRoot, SIGNAL(liveToggle()),
-    //         this, SLOT(onTopBarLiveToggle()), Qt::UniqueConnection);
-    // connect(toolbarRoot, SIGNAL(modeChanged(QString)),
-    //         this, SLOT(onTopBarModeChanged(QString)), Qt::UniqueConnection);
-    // connect(toolbarRoot, SIGNAL(clearRequested()),
-    //         this, SLOT(onTopBarClearRequested()), Qt::UniqueConnection);
-     mLastReplot.start();  // Timer який оновлює сам графік всередині в незалежності приходсять дані чи ні
+    mLastReplot.start();  // Timer який оновлює сам графік всередині в незалежності приходсять дані чи ні
+
+
 }
 
 void ChartPanelWidget::setData(std::vector<parametrs> &data) {

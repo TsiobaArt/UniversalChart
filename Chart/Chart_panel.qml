@@ -98,6 +98,15 @@ Item {
             MouseArea { anchors.fill: parent; onClicked: root.clearRequested() }
         }
 
+
+        Button {
+            text: ""
+            icon.source: "qrc:/Icon/theme.svg"
+            icon.width: 18
+            icon.height: 18
+            icon.color: hovered ? "#4CC2FF" : "#E6E6E6"   // зміна кольору
+        }
+
         Item { Layout.fillWidth: true }
     }
 }

@@ -19,18 +19,22 @@ Rectangle {
         // icon.color: "#fb2c2e32"
         // flat: true
         // highlighted: true
-        icon.color: butt.hovered ? "lightblue" : "#444"
+        // icon.color: butt.hovered ? "lightblue" : "#444"
+        icon.color: butt.checked
+                       ? "lightblue"
+                       : (butt.hovered ? "lightblue" : "#444")
+
         icon.width: width
         icon.height: height
         // зміна кольору
     }
 
-    Rectangle {
-        width: butt.width
-        radius: 6
-        height: 2
-        color: butt.checked ?  "lightblue" : "transparent"
-        anchors.bottom: parent.top
-        anchors.bottomMargin: 2
-    }
+    // Rectangle {
+    //     width: butt.width
+    //     radius: 6
+    //     height: 2
+    //     color: butt.checked ?  "lightblue" : "transparent"
+    //     anchors.bottom: parent.top
+    //     anchors.bottomMargin: 2
+    // }
 }

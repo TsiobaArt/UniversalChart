@@ -28,7 +28,9 @@ Item {
         // anchors.fill: parent
         // anchors.margins: 6
         spacing: 6
-        anchors.centerIn: parent
+        // anchors.centerIn: parent
+        anchors.left: parent.left
+        anchors.leftMargin: 20
         CustomButton_Image {
             id: buttDrag
             source: "qrc:/Icon/drag.svg"
@@ -69,6 +71,10 @@ Item {
         CustomButton_Image {
             id: buttTheme
             source: "qrc:/Icon/theme.svg"
+        }
+        CustomButton_Image {
+            id: buttDelete
+            source: "qrc:/Icon/delete.svg"
         }
     }
 }

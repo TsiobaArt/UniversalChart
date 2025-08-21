@@ -42,8 +42,9 @@ FlightChart::FlightChart(QWidget *parent)
         QCP::iRangeZoom
         );
 
+    // customPlot->axisRect()->setAutoMargins(QCP::msNone);
+    // customPlot->axisRect()->setMargins(QMargins(30, 10, 10, 30)); // під себе
 
-    // customPlot->setOpenGl(true);
 }
 
 FlightChart::~FlightChart() {}
@@ -57,6 +58,7 @@ void FlightChart::darkTheme()
 {
     customPlot->setBackground(QColor("#2b2b2b"));
     customPlot->axisRect()->setBackground(QColor("#1e1e1e"));
+    // customPlot->axisRect()->setBackground(QColor("#ed0d1216"));
 
     customPlot->xAxis->setTickLabelColor(Qt::white);
     customPlot->yAxis->setTickLabelColor(Qt::white);
@@ -137,9 +139,7 @@ void FlightChart::appendDataChart(parametrs &data)
         if (!spec) continue;
 
         g->addData(tx, spec->getter(data));
-
         // qDebug() << "Graph" << key << "points:" << g->dataCount();
-
     }
 
     if (m_liveModeEnabled) {

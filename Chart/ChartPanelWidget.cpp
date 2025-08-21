@@ -4,130 +4,26 @@
 #include "qcustomplot.h"
 #include <QQmlContext>
 #include <QQuickWidget>
-
 ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     : QWidget(parent)
 {
     setMinimumSize(800, 600);   // мінімальний розмір вікна (ширина × висота)
+    setupUi();                  // вся побудова GUI тут
+    mLastReplot.start();
 
-
-    // ===== ГОЛОВНИЙ ГОРИЗОНТАЛЬНИЙ ЛЕЙАУТ (ЛІВО: чекбокси, ПРАВО: панель+графік) =====
-    auto *rootRow = new QHBoxLayout(this);
-    rootRow->setContentsMargins(0, 0, 0, 0);
-    rootRow->setSpacing(5);
-
-    // ------------------ ЛІВА ПАНЕЛЬ (СКРОЛ ЧЕКБОКСІВ) ------------------
-    QWidget *checkboxContent = new QWidget;
-    QVBoxLayout *checkboxLayout = new QVBoxLayout(checkboxContent);
-    checkboxLayout->setAlignment(Qt::AlignTop);
-    checkboxLayout->setSpacing(2);
-    checkboxLayout->setContentsMargins(6, 6, 6, 6);
-
-    for (const auto &f : PARAM_FIELDS()) {
-        QCheckBox *cb = new QCheckBox(f.label);
-
-        this->setStyleSheet(R"(
-    QCheckBox {
-        spacing: 8px;
-        font-size: 16px;
-        color: #ddd;
+    for (auto it = checkboxes.begin(); it != checkboxes.end(); ++it) {
+        connect(it.value(), &QCheckBox::stateChanged,
+                this, &ChartPanelWidget::onCheckboxChanged);
     }
-        QCheckBox::hover {
-        color: white
-    }
-    QCheckBox::indicator {
-        width: 24px;
-        height: 24px;
-        border-radius: 6px;
-        border: 2px solid #444;
-        background: #ed0d1216;
-    }
-    QCheckBox::indicator:hover {
-        border: 2px solid lightblue;
-    }
-    QCheckBox::indicator:checked {
-        image: url(:/Icon/checkmark.svg);   /* можна svg галочку */
-    }
-)");
 
-        cb->setChecked(f.defaultChecked);
-
-        // робимо чекбокси "у всю довжину" (тобто на всю доступну ширину панелі)
-        cb->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-        // cb->setWordWrap(true); // якщо підписи довгі — переносимо
-
-        checkboxes[f.key] = cb;
-        checkboxLayout->addWidget(cb);
-        connect(cb, &QCheckBox::stateChanged, this, &ChartPanelWidget::onCheckboxChanged);
-    }
-    checkboxLayout->addStretch(); // щоб зверху було щільно, а низ заповнювався
-
-    QScrollArea *scrollArea = new QScrollArea;
-    scrollArea->setWidgetResizable(true);
-    scrollArea->setWidget(checkboxContent);
-    scrollArea->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-
-    QWidget *leftPanel = new QWidget;
-    auto *leftPanelLayout = new QVBoxLayout(leftPanel);
-    leftPanelLayout->setContentsMargins(0, 0, 0, 0);
-    leftPanelLayout->setSpacing(0);
-    leftPanelLayout->addWidget(scrollArea, 1);
-    leftPanel->setMaximumWidth(300); // або за бажанням: setFixedWidth(280);
-
-    // ------------------ ПРАВА КОЛОНКА: ВЕРХНЯ QML ПАНЕЛЬ + ГРАФІК ------------------
-    QWidget *rightCol = new QWidget;
-    auto *rightColLayout = new QVBoxLayout(rightCol);
-    rightColLayout->setContentsMargins(0, 0, 0, 0);
-    rightColLayout->setSpacing(5);
-
-    // ===== ВЕРХНЯ QML ПАНЕЛЬ (належить тільки правій колонці з графіком) =====
-    m_qmlTopBar = new QQuickWidget(rightCol);
-    m_qmlTopBar->setResizeMode(QQuickWidget::SizeRootObjectToView);
-    m_qmlTopBar->setFixedHeight(60);          // <-- фіксована висота 50
-
-    windowColor =   QApplication::palette().color(QPalette::Window);
-    m_qmlTopBar->rootContext()->setContextProperty("appWindowColor", windowColor);
-
-    m_qmlTopBar->setSource(QUrl(QStringLiteral("qrc:/Chart_panel.qml")));
-    // ...
-
-    // ------------------ ГРАФІК ------------------
-    flightChart = new FlightChart;
-
-    // rightColLayout->addWidget(m_qmlTopBar);   // панель тільки над графіком (у правій колонці)
-    // rightColLayout->addWidget(flightChart, 1);
-    rightColLayout->addWidget(flightChart, 1);   // графік займає весь простір
-    rightColLayout->addWidget(m_qmlTopBar);      // панель піде внизу
-
-    // ------------------ ЗБІР ВСЬОГО ------------------
-    rootRow->addWidget(leftPanel);            // лівий стовпчик: чекбокси
-    rootRow->addWidget(rightCol, 1);          // правий стовпчик: панель+графік
-
-    // // --------------------------  test Даних
-    // testTimer = new QTimer(this);
-    // connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
-    // testTimer->start(1); // 100 Гц
-    // // --------------------------  test Даних
-
-    // ===== з'єднання сигналів з QML панелі (за потреби розкоментуй) =====
-    // QObject *toolbarRoot = m_qmlTopBar->rootObject();
-    // if (toolbarRoot) {
-    //     connect(toolbarRoot, SIGNAL(themeToggle()),
-    //             this, SLOT(onTopBarThemeToggle()), Qt::UniqueConnection);
-    //     connect(toolbarRoot, SIGNAL(autoZoom()),
-    //             this, SLOT(onTopBarAutoZoom()), Qt::UniqueConnection);
-    //     connect(toolbarRoot, SIGNAL(liveToggle()),
-    //             this, SLOT(onTopBarLiveToggle()), Qt::UniqueConnection);
-    //     connect(toolbarRoot, SIGNAL(modeChanged(QString)),
-    //             this, SLOT(onTopBarModeChanged(QString)), Qt::UniqueConnection);
-    //     connect(toolbarRoot, SIGNAL(clearRequested()),
-    //             this, SLOT(onTopBarClearRequested()), Qt::UniqueConnection);
-    // }
-
-    mLastReplot.start();  // Timer який оновлює сам графік всередині в незалежності приходсять дані чи ні
-
+        // --------------------------  test Даних
+        testTimer = new QTimer(this);
+        connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
+        testTimer->start(1); // 100 Гц
+        // --------------------------  test Даних
 
 }
+
 
 void ChartPanelWidget::setData(std::vector<parametrs> &data) {
     flightChart->setDataChart(data);
@@ -265,4 +161,110 @@ void ChartPanelWidget::autoZoom()
 {
     flightChart->getPlot()->rescaleAxes();
     flightChart->getPlot()->replot(QCustomPlot::rpQueuedReplot);
+}
+
+void ChartPanelWidget::setupUi()
+{
+    // ===== ГОЛОВНИЙ ГОРИЗОНТАЛЬНИЙ ЛЕЙАУТ (ЛІВО: чекбокси, ПРАВО: панель+графік) =====
+    auto *rootRow = new QHBoxLayout(this);
+    rootRow->setContentsMargins(0, 0, 0, 0);
+    rootRow->setSpacing(5);
+
+    // ------------------ ЛІВА ПАНЕЛЬ (СКРОЛ ЧЕКБОКСІВ) ------------------
+    QWidget *checkboxContent = new QWidget;
+    auto *checkboxLayout = new QVBoxLayout(checkboxContent);
+    checkboxLayout->setAlignment(Qt::AlignTop);
+    checkboxLayout->setSpacing(2);
+    checkboxLayout->setContentsMargins(6, 6, 6, 6);
+
+    // застосовуємо стилі до всього віджета (раз, а не в циклі)
+    this->setStyleSheet(checkboxQss());
+
+    for (const auto &f : PARAM_FIELDS()) {
+        QCheckBox *cb = new QCheckBox(f.label);
+        cb->setChecked(f.defaultChecked);
+
+        // робимо чекбокси "у всю довжину" (тобто на всю доступну ширину панелі)
+        cb->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        // cb->setWordWrap(true); // якщо підписи довгі — переносимо
+
+        checkboxes[f.key] = cb;
+        checkboxLayout->addWidget(cb);
+
+        // конекти винесеш у конструкторі, якщо треба — тут лише побудова
+        // connect(cb, &QCheckBox::stateChanged, this, &ChartPanelWidget::onCheckboxChanged);
+    }
+    checkboxLayout->addStretch(); // щоб зверху було щільно, а низ заповнювався
+
+    QScrollArea *scrollArea = new QScrollArea;
+    scrollArea = new QScrollArea;
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setWidget(checkboxContent);
+    scrollArea->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+
+    QWidget *leftPanel = new QWidget;
+    leftPanel = new QWidget;
+    auto *leftPanelLayout = new QVBoxLayout(leftPanel);
+    leftPanelLayout->setContentsMargins(0, 0, 0, 0);
+    leftPanelLayout->setSpacing(0);
+    leftPanelLayout->addWidget(scrollArea, 1);
+    leftPanel->setMaximumWidth(300); // або за бажанням: setMinimumWidth(250), setMaximumWidth(350)
+
+    // ------------------ ПРАВА КОЛОНКА: QML ПАНЕЛЬ + ГРАФІК ------------------
+    QWidget *rightCol = new QWidget;
+    auto *rightColLayout = new QVBoxLayout(rightCol);
+    rightColLayout->setContentsMargins(0, 0, 0, 0);
+    rightColLayout->setSpacing(5);
+
+    // ===== QML ПАНЕЛЬ (належить тільки правій колонці з графіком) =====
+    m_qmlTopBar = new QQuickWidget(rightCol);
+    m_qmlTopBar->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    m_qmlTopBar->setFixedHeight(60);          // фіксована висота
+
+    windowColor = QApplication::palette().color(QPalette::Window);
+    m_qmlTopBar->rootContext()->setContextProperty("appWindowColor", windowColor);
+    m_qmlTopBar->setSource(QUrl(QStringLiteral("qrc:/Chart_panel.qml")));
+
+    // ------------------ ГРАФІК ------------------
+    flightChart = new FlightChart;
+
+    // панель зверху над графіком:
+    rightColLayout->addWidget(m_qmlTopBar);
+    rightColLayout->addWidget(flightChart, 1);
+
+    // // якщо треба панель знизу під графіком — поміняй порядок:
+    // rightColLayout->addWidget(flightChart, 1);
+    // rightColLayout->addWidget(m_qmlTopBar);
+
+    // ------------------ ЗБІР ВСЬОГО ------------------
+    rootRow->addWidget(leftPanel);     // лівий стовпчик: чекбокси
+    rootRow->addWidget(rightCol, 1);   // правий стовпчик: панель+графік
+}
+
+QString ChartPanelWidget::checkboxQss() const
+{
+    return QString::fromUtf8(R"(
+        QCheckBox {
+            spacing: 8px;
+            font-size: 16px;
+            color: #ddd;
+        }
+        QCheckBox:hover {
+            color: white;
+        }
+        QCheckBox::indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 2px solid #444;
+            background: #ed0d1216;
+        }
+        QCheckBox::indicator:hover {
+            border: 2px solid lightblue;
+        }
+        QCheckBox::indicator:checked {
+            image: url(:/Icon/checkmark.svg);
+            /* фон не заливаємо */
+        }
+    )");
 }

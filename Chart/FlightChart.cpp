@@ -24,7 +24,6 @@ FlightChart::FlightChart(QWidget *parent)
     // customPlot->yAxis->grid()->setVisible(false);
 
 
-
     // [OPTIM] Прибрати хіту-тести по легенді (менше навантаження)
     customPlot->legend->setSelectableParts(QCPLegend::spNone);
     // [OPTIM] Зробити легенду прозорою (менше малювання фону)

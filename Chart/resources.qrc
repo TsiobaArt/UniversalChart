@@ -7,5 +7,11 @@
         <file>Icon/drag.svg</file>
         <file>Icon/expand.svg</file>
         <file>Icon/live.svg</file>
+        <file>Icon/clear.svg</file>
+        <file>Icon/zoom4.svg</file>
+        <file>CustomComponent/CustomButton_Image.qml</file>
+        <file>Icon/csv.svg</file>
+        <file>Icon/image.svg</file>
+        <file>Icon/checkmark.svg</file>
     </qresource>
 </RCC>

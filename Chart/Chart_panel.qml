@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-
+import "CustomComponent"
 Item {
     id: root
     // QML диктує бажаний розмір:
@@ -12,114 +12,63 @@ Item {
     signal liveToggle()
     signal modeChanged(string mode)   // "drag" | "rect"
     signal clearRequested()
-
     // alias для зміни тексту кнопки Live з C++
-    property alias liveText: liveBtnText.text
+    // property alias liveText: liveBtnText.text
     property string currentMode: "drag"
-
     Rectangle {
         anchors.fill: parent
         color: appWindowColor
         border.color: "#333"
     }
-
+    ButtonGroup {
+        id: modeGroup
+        buttons: [buttDrag.butt, buttZoomArea.butt]
+    }
     Row {
-        anchors.fill: parent
-        anchors.margins: 6
+        // anchors.fill: parent
+        // anchors.margins: 6
         spacing: 6
+        anchors.centerIn: parent
+        CustomButton_Image {
+            id: buttDrag
+            source: "qrc:/Icon/drag.svg"
+            butt.checkable: true
+            butt.checked: true
 
-        // Кнопка: Тема
-        Rectangle {
-            Layout.preferredWidth: 100
-            Layout.fillHeight: true
-            radius: 6
-            border.color: "#444"
-            color: "#222"
-            Text { anchors.centerIn: parent; text: "Тема" }
-            MouseArea { anchors.fill: parent; onClicked: root.themeToggle() }
         }
 
-        // Кнопка: Автозум
-        Rectangle {
-            width: 120
-            height: parent.height
-            radius: 6
-            border.color: "#444"
-            color: "#222"
-            Text { anchors.centerIn: parent; text: "Автозум" }
-            MouseArea { anchors.fill: parent; onClicked: root.autoZoom() }
+        CustomButton_Image {
+            id: buttZoomArea
+            source: "qrc:/Icon/zoom4.svg"
+            butt.checkable: true
         }
-
-        // Кнопка: Live toggle
-        Rectangle {
-            width: 120
-            height: parent.height
-            radius: 6
-            border.color: "#444"
-            color: "#222"
-            Text { id: liveBtnText; anchors.centerIn: parent; text: "Live" }
-            MouseArea { anchors.fill: parent; onClicked: root.liveToggle() }
+        CustomButton_Image {
+            id: buttExpend
+            source: "qrc:/Icon/expand.svg"
         }
-
-        // Перемикач режимів (Drag / Rect)
-        Rectangle {
-            width: 120
-            height: parent.height
-            radius: 6
-            border.color: "#444"
-            color: "#222"
-            Row {
-                anchors.centerIn: parent
-                spacing: 8
-                Text { text: "Рука" }
-                Rectangle {
-                    width: 16; height: 16; radius: 3
-                    border.color: "#555"; color: root.currentMode==="drag" ? "#999" : "#222"
-                    MouseArea { anchors.fill: parent; onClicked: { root.currentMode="drag"; root.modeChanged("drag"); } }
-                }
-                Text { text: "Виділення" }
-                Rectangle {
-                    width: 16; height: 16; radius: 3
-                    border.color: "#555"; color: root.currentMode==="rect" ? "#999" : "#222"
-                    MouseArea { anchors.fill: parent; onClicked: { root.currentMode="rect"; root.modeChanged("rect"); } }
-                }
-            }
+        CustomButton_Image {
+            id: buttIconHome
+            source: "qrc:/Icon/home.svg"
         }
-
-        Rectangle {
-            width: 40
-            height: 40
-            radius: 6
-            border.color: buttTheme.hovered ? "lightblue" : "#444"
-            color: "#222"
-            ToolButton {
-                id: buttTheme
-                icon.source: "qrc:/Icon/theme.svg"
-                background: Item { }
-                width:  40
-                height: 40
-                icon.width: width
-                icon.height: height
-                icon.color: hovered ? "lightblue" : "#444"   // зміна кольору
-            }
+        CustomButton_Image {
+            id: buttLive
+            source: "qrc:/Icon/live.svg"
         }
-
-        Rectangle {
-            width: 40
-            height: 40
-            radius: 6
-            border.color: buttTheme.hovered ? "lightblue" : "#444"
-            color: "#222"
-            ToolButton {
-                id: buttTheme
-                icon.source: "qrc:/Icon/theme.svg"
-                background: Item { }
-                width:  40
-                height: 40
-                icon.width: width
-                icon.height: height
-                icon.color: hovered ? "lightblue" : "#444"   // зміна кольору
-            }
+        CustomButton_Image {
+            id: buttClearCheckBox
+            source: "qrc:/Icon/clear.svg"
+        }
+        CustomButton_Image {
+            id: buttExportCsv
+            source: "qrc:/Icon/csv.svg"
+        }
+        CustomButton_Image {
+            id: buttSaveChart
+            source: "qrc:/Icon/image.svg"
+        }
+        CustomButton_Image {
+            id: buttTheme
+            source: "qrc:/Icon/theme.svg"
         }
     }
 }

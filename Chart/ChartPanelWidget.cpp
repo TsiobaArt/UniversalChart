@@ -8,6 +8,9 @@
 ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     : QWidget(parent)
 {
+    setMinimumSize(800, 600);   // мінімальний розмір вікна (ширина × висота)
+
+
     // ===== ГОЛОВНИЙ ГОРИЗОНТАЛЬНИЙ ЛЕЙАУТ (ЛІВО: чекбокси, ПРАВО: панель+графік) =====
     auto *rootRow = new QHBoxLayout(this);
     rootRow->setContentsMargins(0, 0, 0, 0);
@@ -22,6 +25,31 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
 
     for (const auto &f : PARAM_FIELDS()) {
         QCheckBox *cb = new QCheckBox(f.label);
+
+        this->setStyleSheet(R"(
+    QCheckBox {
+        spacing: 8px;
+        font-size: 16px;
+        color: #ddd;
+    }
+        QCheckBox::hover {
+        color: white
+    }
+    QCheckBox::indicator {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        border: 2px solid #444;
+        background: #ed0d1216;
+    }
+    QCheckBox::indicator:hover {
+        border: 2px solid lightblue;
+    }
+    QCheckBox::indicator:checked {
+        image: url(:/Icon/checkmark.svg);   /* можна svg галочку */
+    }
+)");
+
         cb->setChecked(f.defaultChecked);
 
         // робимо чекбокси "у всю довжину" (тобто на всю доступну ширину панелі)
@@ -55,7 +83,7 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     // ===== ВЕРХНЯ QML ПАНЕЛЬ (належить тільки правій колонці з графіком) =====
     m_qmlTopBar = new QQuickWidget(rightCol);
     m_qmlTopBar->setResizeMode(QQuickWidget::SizeRootObjectToView);
-    m_qmlTopBar->setFixedHeight(50);          // <-- фіксована висота 50
+    m_qmlTopBar->setFixedHeight(60);          // <-- фіксована висота 50
 
     windowColor =   QApplication::palette().color(QPalette::Window);
     m_qmlTopBar->rootContext()->setContextProperty("appWindowColor", windowColor);
@@ -66,18 +94,20 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     // ------------------ ГРАФІК ------------------
     flightChart = new FlightChart;
 
-    rightColLayout->addWidget(m_qmlTopBar);   // панель тільки над графіком (у правій колонці)
-    rightColLayout->addWidget(flightChart, 1);
+    // rightColLayout->addWidget(m_qmlTopBar);   // панель тільки над графіком (у правій колонці)
+    // rightColLayout->addWidget(flightChart, 1);
+    rightColLayout->addWidget(flightChart, 1);   // графік займає весь простір
+    rightColLayout->addWidget(m_qmlTopBar);      // панель піде внизу
 
     // ------------------ ЗБІР ВСЬОГО ------------------
     rootRow->addWidget(leftPanel);            // лівий стовпчик: чекбокси
     rootRow->addWidget(rightCol, 1);          // правий стовпчик: панель+графік
 
-    // --------------------------  test Даних
-    testTimer = new QTimer(this);
-    connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
-    testTimer->start(1); // 100 Гц
-    // --------------------------  test Даних
+    // // --------------------------  test Даних
+    // testTimer = new QTimer(this);
+    // connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
+    // testTimer->start(1); // 100 Гц
+    // // --------------------------  test Даних
 
     // ===== з'єднання сигналів з QML панелі (за потреби розкоментуй) =====
     // QObject *toolbarRoot = m_qmlTopBar->rootObject();

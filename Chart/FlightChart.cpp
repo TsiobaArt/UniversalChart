@@ -2,7 +2,6 @@
 #include <QVBoxLayout>
 #include <QPen>
 #include <QBrush>
-#include "qcustomplot.h"
 #include "Fields_parametrs.h"
 #include "Fields_lookup.h"
 
@@ -52,8 +51,25 @@ FlightChart::FlightChart(QWidget *parent)
     });
 
     // ------------------------------------------------------------------------ Основна частина
-    // customPlot->axisRect()->setAutoMargins(QCP::msNone);
-    // customPlot->axisRect()->setMargins(QMargins(40, 0, 0, 30)); // під себе
+
+    connect(customPlot, &QCustomPlot::mousePress, this, [this](QMouseEvent* ev){
+        if (ev->button() == Qt::RightButton &&
+            customPlot->selectionRectMode() == QCP::srmZoom)
+        {
+            customPlot->rescaleAxes();
+            customPlot->replot(QCustomPlot::rpQueuedReplot);
+        }
+    });
+
+    // КООРДИНАТИ
+    connect(customPlot, &QCustomPlot::mouseMove, this, [this](QMouseEvent* e){
+        const bool inside = customPlot->axisRect()->rect().contains(e->pos());
+        emit cursorPosChanged(std::numeric_limits<double>::quiet_NaN(),
+                              std::numeric_limits<double>::quiet_NaN(), false);
+        const double x = customPlot->xAxis->pixelToCoord(e->pos().x());
+        const double y = customPlot->yAxis->pixelToCoord(e->pos().y());
+        emit cursorPosChanged(x, y, true);
+    });
 
 }
 
@@ -221,6 +237,7 @@ void FlightChart::updateLiveWindow(double currentX)
     customPlot->xAxis->setRange(QCPRange(left, currentX));
 }
 
+
 void FlightChart::setLiveModeEnabled(bool on, int step)
 {
     m_liveCount = step;
@@ -235,3 +252,5 @@ void FlightChart::setLiveModeEnabled(bool on, int step)
     }
     updateLiveWindow(rightX);
 }
+
+

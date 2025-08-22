@@ -72,6 +72,8 @@ private:
     QPushButton *liveBtn = nullptr;
     QTimer *testTimer = nullptr;
 
+    QLabel *coordLabel = nullptr;
+
 };
 // ChartPanelWidget::ChartPanelWidget(QWidget *parent)  //  ОСТАННЯ ВЕРІСЯ ПРИБРАТИ  setupUi і вставити на міця
 //     : QWidget(parent)

@@ -5,6 +5,7 @@
 #include <QHash>
 #include <QStringList>
 #include "parametrs.h"
+#include "qcustomplot.h"
 
 class QCustomPlot;
 class QCPGraph;
@@ -48,4 +49,48 @@ private:
     double m_timeWindowSec = 15.0;   // не використовується для видалення
     bool   m_liveModeEnabled = false;
     int    m_liveCount = 1000;
+
+
+private:
+    bool m_rmbDown = false;   // Права кнопка затиснута?
+signals:
+    void cursorPosChanged(double x, double y, bool inside);
 };
+    // customPlot->axisRect()->setAutoMargins(QCP::msNone);
+    // customPlot->axisRect()->setMargins(QMargins(40, 0, 0, 30)); // під себе
+
+//Варіант щоб показувати тільки по парвій кнопці мишки
+// // Права кнопка: автозум у режимі прямокутного зуму + прапор rmb
+// connect(customPlot, &QCustomPlot::mousePress, this, [this](QMouseEvent* ev){
+//     if (ev->button() == Qt::RightButton) {
+//         m_rmbDown = true;
+//         if (customPlot->selectionRectMode() == QCP::srmZoom) {
+//             customPlot->rescaleAxes();
+//             customPlot->replot(QCustomPlot::rpQueuedReplot);
+//         }
+//     }
+// });
+
+// connect(customPlot, &QCustomPlot::mouseRelease, this, [this](QMouseEvent* ev){
+//     if (ev->button() == Qt::RightButton)
+//         m_rmbDown = false;
+// });
+
+// // Координати курсора (тільки коли затиснута права кнопка)
+// connect(customPlot, &QCustomPlot::mouseMove, this, [this](QMouseEvent* e){
+//     // показуємо лише під час RMB
+//     if (!m_rmbDown) {
+//         emit cursorPosChanged(std::numeric_limits<double>::quiet_NaN(),
+//                               std::numeric_limits<double>::quiet_NaN(),
+//                               false);
+//         return;
+//     }
+//     const bool inside = customPlot->axisRect()->rect().contains(e->pos());
+//     double x = std::numeric_limits<double>::quiet_NaN();
+//     double y = std::numeric_limits<double>::quiet_NaN();
+//     if (inside) {
+//         x = customPlot->xAxis->pixelToCoord(e->pos().x());
+//         y = customPlot->yAxis->pixelToCoord(e->pos().y());
+//     }
+//     emit cursorPosChanged(x, y, inside);
+// });

@@ -31,6 +31,18 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
         connect(toolbarRoot, SIGNAL(clearSelection()), this, SLOT(clearSelection()), Qt::UniqueConnection);
     }
 
+
+    connect(flightChart, &FlightChart::cursorPosChanged, // показник координат
+            this, [this](double x, double y, bool inside){
+                if (!inside || std::isnan(x) || std::isnan(y)) {
+                    coordLabel->setText("x: —    y: —");
+                    return;
+                }
+                coordLabel->setText(QString("x: %1    y: %2")
+                                        .arg(x, 0, 'f', 2)
+                                        .arg(y, 0, 'f', 2));
+            });
+
 }
 
 
@@ -265,6 +277,21 @@ void ChartPanelWidget::setupUi()
     // ------------------ ЗБІР ВСЬОГО ------------------
     rootRow->addWidget(leftPanel);     // лівий стовпчик: чекбокси
     rootRow->addWidget(rightCol, 1);   // правий стовпчик: панель+графік
+
+
+    // у setupUi(), одразу після створення правої колонки та flightChart:
+    coordLabel = new QLabel("x: —    y: —", rightCol);
+    coordLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    coordLabel->setMinimumHeight(22);
+    coordLabel->setStyleSheet(
+        "QLabel{color:white;padding:0 8px;font-family:'DejaVu Sans Mono',Consolas,monospace;"
+        "font-size:14px;background:transparent;}"
+        );
+
+    // ДОДАЙ ПІСЛЯ графіка:
+    rightColLayout->addWidget(flightChart, 1);
+    rightColLayout->addWidget(coordLabel);
+
 }
 
 QString ChartPanelWidget::checkboxQss() const

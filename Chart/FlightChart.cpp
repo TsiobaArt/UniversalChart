@@ -221,8 +221,9 @@ void FlightChart::updateLiveWindow(double currentX)
     customPlot->xAxis->setRange(QCPRange(left, currentX));
 }
 
-void FlightChart::setLiveModeEnabled(bool on)
+void FlightChart::setLiveModeEnabled(bool on, int step)
 {
+    m_liveCount = step;
     m_liveModeEnabled = on;
     // перерахувати діапазон відразу (використаємо поточну праву межу або верхній X даних)
     double rightX = customPlot->xAxis->range().upper;

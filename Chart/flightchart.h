@@ -29,7 +29,7 @@ public:
     void plotSelectedFields(const QStringList &fieldKeys);
 
     // Live режим: показувати лише останні N точок (без видалення старих)
-    void setLiveModeEnabled(bool on);
+    void setLiveModeEnabled(bool on, int step);
     bool liveModeEnabled() const { return m_liveModeEnabled; }
     void setLiveCount(int n) { m_liveCount = n > 0 ? n : 1; }
     int liveCount() const { return m_liveCount; }

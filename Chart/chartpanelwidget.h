@@ -49,7 +49,7 @@ private slots:
     void toggleTheme();
     void autoZoom();
     void modeChange(QString mode);
-    void liveButt(bool mode);
+    void liveButt(bool mode, int step);
 
 private:
     // ===== GUI =====

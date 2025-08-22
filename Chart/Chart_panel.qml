@@ -9,9 +9,10 @@ Item {
     implicitHeight: 56
     signal themeToggle()
     signal autoZoom()
-    signal liveButt(bool mode)
+    signal liveButt(bool mode, int step)
     signal modeChanged(string mode)   // "drag" | "rect"
     signal clearSelection();
+    signal liveCount(int count);
     // alias для зміни тексту кнопки Live з C++
     // property alias liveText: liveBtnText.text
     property string currentMode: "drag"
@@ -58,27 +59,27 @@ Item {
             butt.autoExclusive: false
             Component.onCompleted: butt.checked = false
             butt.onCheckedChanged: {
-                root.liveButt(butt.checked)
+                root.liveButt(butt.checked, liveCountSpin.value)
             }
         }
         SpinBox {
-                      id: liveCount
-                      from: 10
-                      to: 100000
-                      value: 1
-                      stepSize: 10
-                      editable: true
-                      // стриманий темний стиль
-                      width: buttLive.width + 20
-                      height: buttLive.height
-                      background: Rectangle {
-                          radius: 4
-                          color: "#2b2b2b"
-                          border.color: buttLive.butt.checked ? "lightblue" : "#555"
-                      }
-                      // up.indicator: ToolButton { text: "▲"; visible: true }
-                      // down.indicator: ToolButton { text: "▼"; visible: true }
-                  }
+            id: liveCountSpin
+            from: 5
+            to: 100000
+            value: 100
+            stepSize: 1
+            editable: true
+            width: buttLive.width +10
+            height: buttLive.height
+            enabled: !buttLive.butt.checked
+            opacity: !buttLive.butt.checked ? 1 : 0.9
+
+            background: Rectangle {
+                radius: 4
+                color: "#2b2b2b"
+                border.color: buttLive.butt.checked ? "lightblue" : "#555"
+            }
+        }
 
         CustomButton_Image {
             id: buttExpend
@@ -87,10 +88,7 @@ Item {
             root.autoZoom();
             }
         }
-        CustomButton_Image {
-            id: buttIconHome
-            source: "qrc:/Icon/home.svg"
-        }
+
         CustomButton_Image {
             id: buttClearCheckBox
             source: "qrc:/Icon/clear.svg"
@@ -113,6 +111,13 @@ Item {
         CustomButton_Image {
             id: buttDelete
             source: "qrc:/Icon/delete.svg"
+        }
+        CustomButton_Image {
+            id: buttToopTips
+            source: "qrc:/Icon/info.svg"
+            butt.checkable: true
+            butt.autoExclusive: false
+            Component.onCompleted: butt.checked = false
         }
     }
 }

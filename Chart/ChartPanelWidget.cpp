@@ -7,7 +7,7 @@
 ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     : QWidget(parent)
 {
-    setMinimumSize(800, 600);   // мінімальний розмір вікна (ширина × висота)
+    setMinimumSize(840, 600);   // мінімальний розмір вікна (ширина × висота)
     setupUi();                  // вся побудова GUI тут
     mLastReplot.start();
 
@@ -24,9 +24,9 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
 
     QObject *toolbarRoot = m_qmlTopBar->rootObject();
     if (toolbarRoot) {
-        connect(toolbarRoot, SIGNAL(themeToggle()),this, SLOT(onTopBarThemeToggle()), Qt::UniqueConnection);
+        // connect(toolbarRoot, SIGNAL(themeToggle()),this, SLOT(onTopBarThemeToggle()), Qt::UniqueConnection);
         connect(toolbarRoot, SIGNAL(autoZoom()),this, SLOT(autoZoom()), Qt::UniqueConnection);
-        connect(toolbarRoot, SIGNAL(liveButt(bool)),this, SLOT(liveButt(bool)), Qt::UniqueConnection);
+        connect(toolbarRoot, SIGNAL(liveButt(bool, int)),this, SLOT(liveButt(bool,int)), Qt::UniqueConnection);
         connect(toolbarRoot, SIGNAL(modeChanged(QString)), this, SLOT(modeChange(QString)), Qt::UniqueConnection);
         connect(toolbarRoot, SIGNAL(clearSelection()), this, SLOT(clearSelection()), Qt::UniqueConnection);
     }
@@ -186,9 +186,9 @@ void ChartPanelWidget::modeChange(QString mode)
     }
 }
 
-void ChartPanelWidget::liveButt(bool mode)
+void ChartPanelWidget::liveButt(bool mode, int step)
 {
-    flightChart->setLiveModeEnabled(mode);
+    flightChart->setLiveModeEnabled(mode, step);
 }
 
 void ChartPanelWidget::setupUi()
@@ -218,8 +218,6 @@ void ChartPanelWidget::setupUi()
 
         checkboxes[f.key] = cb;
         checkboxLayout->addWidget(cb);
-
-        // конекти винесеш у конструкторі, якщо треба — тут лише побудова
         // connect(cb, &QCheckBox::stateChanged, this, &ChartPanelWidget::onCheckboxChanged);
     }
     checkboxLayout->addStretch(); // щоб зверху було щільно, а низ заповнювався

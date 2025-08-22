@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import "CustomComponent"
+import QtQuick.Dialogs
+
 Item {
     id: root
     // QML диктує бажаний розмір:
@@ -13,10 +15,22 @@ Item {
     signal modeChanged(string mode)   // "drag" | "rect"
     signal clearSelection();
     signal liveCount(int count);
+    signal exportCsv(string path)
     // alias для зміни тексту кнопки Live з C++
     // property alias liveText: liveBtnText.text
     property string currentMode: "drag"
-
+    // Діалог збереження CSV
+    FileDialog {
+        id: csvSaveDialog
+        title: "Зберегти як CSV"
+        fileMode: FileDialog.SaveFile
+        nameFilters: ["CSV Files (*.csv)", "All Files (*)"]
+        defaultSuffix: "csv"
+        onAccepted: {
+            // FileDialog повертає url. Для C++ краще передати як рядок-URL: "file:///path/..."
+            root.exportCsv(selectedFile)   // selectedFile – це URL (string)
+        }
+    }
     Connections { // C++ натискання правою кнопкою мишкою в режимі перетягуванння
         target: chartPanel
         function onRightClickDrag() {
@@ -107,6 +121,10 @@ Item {
         CustomButton_Image {
             id: buttExportCsv
             source: "qrc:/Icon/csv.svg"
+            butt.onClicked: {
+            csvSaveDialog.open()
+            }
+
         }
         CustomButton_Image {
             id: buttSaveChart

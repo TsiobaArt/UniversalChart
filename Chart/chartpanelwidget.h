@@ -22,7 +22,7 @@
 #include <QQmlContext>
 #include <QQuickItem>
 #include <qapplication.h>
-
+#include "csvexporter.h"
 class QCheckBox;
 class QLabel;
 class QPushButton;
@@ -41,6 +41,12 @@ public:
     void clearData();
     void generateTestData();
     QColor windowColor ;
+
+    QStringList selectedKeys() const;
+
+
+public slots:
+   void  exportToCsv(const QString& path);
 
 private slots:
     void onCheckboxChanged();

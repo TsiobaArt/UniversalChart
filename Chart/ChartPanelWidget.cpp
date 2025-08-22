@@ -19,7 +19,7 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     // --------------------------  test Даних
     testTimer = new QTimer(this);
     connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
-    testTimer->start(1); // 100 Гц
+    testTimer->start(100); // 100 Гц
     // --------------------------  test Даних
 
     QObject *toolbarRoot = m_qmlTopBar->rootObject();
@@ -29,6 +29,7 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
         connect(toolbarRoot, SIGNAL(liveButt(bool, int)),this, SLOT(liveButt(bool,int)), Qt::UniqueConnection);
         connect(toolbarRoot, SIGNAL(modeChanged(QString)), this, SLOT(modeChange(QString)), Qt::UniqueConnection);
         connect(toolbarRoot, SIGNAL(clearSelection()), this, SLOT(clearSelection()), Qt::UniqueConnection);
+        connect(toolbarRoot, SIGNAL(exportCsv(QString)), this, SLOT(exportToCsv(QString)), Qt::UniqueConnection);
     }
 
 
@@ -157,6 +158,15 @@ void ChartPanelWidget::generateTestData()
     this->appendDataStep(p);   // ✅ саме панель, не FlightChart
 
     t += dt;
+}
+
+QStringList ChartPanelWidget::selectedKeys() const
+{
+    QStringList keys;
+    for (auto it = checkboxes.constBegin(); it != checkboxes.constEnd(); ++it)
+        if (it.value() && it.value()->isChecked())
+            keys << it.key();
+    return keys;
 }
 
 void ChartPanelWidget::updatePlot() {
@@ -325,4 +335,73 @@ QString ChartPanelWidget::checkboxQss() const
             /* фон не заливаємо */
         }
     )");
+}
+
+// void ChartPanelWidget::exportToCsv(const QString& path)
+// {
+//     CsvExporter* exporter = new CsvExporter;
+
+//     // щоб можна було запустити в окремому потоці
+//     QThread* thread = new QThread;
+//     exporter->moveToThread(thread);
+
+//     connect(thread, &QThread::started, this, [this, exporter, path]{
+//         const auto keys = selectedKeys();
+//         const auto& data = flightChart->rawData();
+//         exporter->exportSelected(data, keys, path);
+
+//     });
+
+//     connect(exporter, &CsvExporter::exportFinished,
+//             this, [thread, exporter](bool success, QString path){
+//                 qDebug() << "CSV export finished:" << success << path;
+//                 exporter->deleteLater();
+//                 thread->quit();
+//                 thread->deleteLater();
+//             });
+
+//     thread->start();
+// }
+
+void ChartPanelWidget::exportToCsv(const QString& pathOrUrl)
+{
+    // 1) Конвертуємо URL -> локальний шлях і додаємо .csv, якщо нема
+    QString localPath = QUrl(pathOrUrl).isValid()
+                            ? QUrl(pathOrUrl).toLocalFile()
+                            : pathOrUrl;
+    if (localPath.isEmpty())
+        return;
+
+    if (QFileInfo(localPath).suffix().isEmpty())
+        localPath += ".csv";
+
+    // 2) Збираємо дані в GUI-потоці (доступ до чекбоксів/пам’яті тут безпечно)
+    const QStringList keys = selectedKeys();
+    const auto dataCopy    = flightChart->rawData();   // КОПІЯ (auto робить копію)
+
+    // 3) Готуємо воркер і потік
+    auto *exporter = new CsvExporter;   // QObject із сигналом exportFinished(...)
+    auto *thread   = new QThread;
+
+    exporter->moveToThread(thread);
+
+    // Роботу запускаємо у воркер-потоці (ресівер = exporter => код виконається у thread)
+    connect(thread, &QThread::started, exporter,
+            [exporter, dataCopy, keys, localPath]() {
+                const bool ok = exporter->exportSelected(dataCopy, keys, localPath);
+                emit exporter->exportFinished(ok, localPath);
+            });
+
+    // Коректне завершення життєвого циклу
+    connect(exporter, &CsvExporter::exportFinished, thread, &QThread::quit);
+    connect(thread, &QThread::finished, exporter, &QObject::deleteLater);
+    connect(thread, &QThread::finished, thread,   &QObject::deleteLater);
+
+    // (опційно) лог/повідомлення
+    connect(exporter, &CsvExporter::exportFinished, this,
+            [](bool ok, const QString& p){
+                qDebug() << "CSV export finished:" << ok << p;
+            });
+
+    thread->start();
 }

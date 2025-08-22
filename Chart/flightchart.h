@@ -38,6 +38,8 @@ public:
     // (Не обов'язково) часове вікно, якщо захочеш повернутись до секунд
     void setTimeWindow(double seconds) { m_timeWindowSec = seconds; }
 
+    const std::vector<parametrs>& rawData() const { return dataPtr; }
+
 private:
     void updateLiveWindow(double currentX);
 

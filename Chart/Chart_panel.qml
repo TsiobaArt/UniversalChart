@@ -30,18 +30,29 @@ Item {
         spacing: 6
         // anchors.centerIn: parent
         anchors.left: parent.left
-        anchors.leftMargin: 20
+        anchors.leftMargin: 30
+        anchors.verticalCenter: parent.verticalCenter
         CustomButton_Image {
             id: buttDrag
             source: "qrc:/Icon/drag.svg"
             butt.checkable: true
             butt.checked: true
-
+            butt.onClicked: {
+                root.currentMode="drag";
+                root.modeChanged("drag"); }
         }
 
         CustomButton_Image {
             id: buttZoomArea
             source: "qrc:/Icon/zoom4.svg"
+            butt.checkable: true
+            butt.onClicked: {
+                root.currentMode="rect";
+                root.modeChanged("rect"); }
+        }
+        CustomButton_Image {
+            id: buttLive
+            source: "qrc:/Icon/live.svg"
             butt.checkable: true
         }
         CustomButton_Image {
@@ -51,10 +62,6 @@ Item {
         CustomButton_Image {
             id: buttIconHome
             source: "qrc:/Icon/home.svg"
-        }
-        CustomButton_Image {
-            id: buttLive
-            source: "qrc:/Icon/live.svg"
         }
         CustomButton_Image {
             id: buttClearCheckBox

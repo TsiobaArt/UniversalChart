@@ -10,6 +10,10 @@ Rectangle {
     color: "#ed0d1216"
     property string source : ""
     property alias butt: butt
+    scale: butt.pressed ? 0.9 : 1
+    Behavior on scale {
+          NumberAnimation { duration: 50; easing.type: Easing.InOutQuad }
+      }
     ToolButton {
         id: butt
         icon.source: source
@@ -26,15 +30,6 @@ Rectangle {
 
         icon.width: width
         icon.height: height
-        // зміна кольору
+        // scale: butt.pressed ? 0.9 : 1
     }
-
-    // Rectangle {
-    //     width: butt.width
-    //     radius: 6
-    //     height: 2
-    //     color: butt.checked ?  "lightblue" : "transparent"
-    //     anchors.bottom: parent.top
-    //     anchors.bottomMargin: 2
-    // }
 }

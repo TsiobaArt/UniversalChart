@@ -9,9 +9,9 @@ Item {
     implicitHeight: 56
     signal themeToggle()
     signal autoZoom()
-    signal liveToggle()
+    signal liveButt(bool mode)
     signal modeChanged(string mode)   // "drag" | "rect"
-    signal clearRequested()
+    signal clearSelection();
     // alias для зміни тексту кнопки Live з C++
     // property alias liveText: liveBtnText.text
     property string currentMode: "drag"
@@ -24,6 +24,7 @@ Item {
         id: modeGroup
         buttons: [buttDrag.butt, buttZoomArea.butt]
     }
+
     Row {
         // anchors.fill: parent
         // anchors.margins: 6
@@ -54,10 +55,37 @@ Item {
             id: buttLive
             source: "qrc:/Icon/live.svg"
             butt.checkable: true
+            butt.autoExclusive: false
+            Component.onCompleted: butt.checked = false
+            butt.onCheckedChanged: {
+                root.liveButt(butt.checked)
+            }
         }
+        SpinBox {
+                      id: liveCount
+                      from: 10
+                      to: 100000
+                      value: 1
+                      stepSize: 10
+                      editable: true
+                      // стриманий темний стиль
+                      width: buttLive.width + 20
+                      height: buttLive.height
+                      background: Rectangle {
+                          radius: 4
+                          color: "#2b2b2b"
+                          border.color: buttLive.butt.checked ? "lightblue" : "#555"
+                      }
+                      // up.indicator: ToolButton { text: "▲"; visible: true }
+                      // down.indicator: ToolButton { text: "▼"; visible: true }
+                  }
+
         CustomButton_Image {
             id: buttExpend
             source: "qrc:/Icon/expand.svg"
+            butt.onClicked: {
+            root.autoZoom();
+            }
         }
         CustomButton_Image {
             id: buttIconHome
@@ -66,6 +94,9 @@ Item {
         CustomButton_Image {
             id: buttClearCheckBox
             source: "qrc:/Icon/clear.svg"
+            butt.onClicked:  {
+                root.clearSelection();
+            }
         }
         CustomButton_Image {
             id: buttExportCsv

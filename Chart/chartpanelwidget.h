@@ -48,6 +48,8 @@ private slots:
     void clearSelection();
     void toggleTheme();
     void autoZoom();
+    void modeChange(QString mode);
+    void liveButt(bool mode);
 
 private:
     // ===== GUI =====

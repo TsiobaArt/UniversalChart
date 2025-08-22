@@ -42,6 +42,16 @@ FlightChart::FlightChart(QWidget *parent)
         QCP::iRangeZoom
         );
 
+
+    connect(customPlot, &QCustomPlot::mousePress, this, [this](QMouseEvent* ev){ // права кнопка мишки скинути зум
+        if (ev->button() == Qt::RightButton && customPlot->selectionRectMode() == QCP::srmZoom) // якщо режим виділення
+        {
+            customPlot->rescaleAxes();
+            customPlot->replot(QCustomPlot::rpQueuedReplot);
+        }
+    });
+
+
     // customPlot->axisRect()->setAutoMargins(QCP::msNone);
     // customPlot->axisRect()->setMargins(QMargins(40, 0, 0, 30)); // під себе
 

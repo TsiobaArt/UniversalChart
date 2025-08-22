@@ -20,6 +20,7 @@ Rectangle {
         background: Item { }
         width:  parent.width
         height: parent.height
+        autoExclusive: false
         // icon.color: "#fb2c2e32"
         // flat: true
         // highlighted: true

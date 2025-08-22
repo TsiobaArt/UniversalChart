@@ -14,5 +14,6 @@
         <file>Icon/image.svg</file>
         <file>Icon/checkmark.svg</file>
         <file>Icon/delete.svg</file>
+        <file>Icon/info.svg</file>
     </qresource>
 </RCC>

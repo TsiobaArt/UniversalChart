@@ -16,11 +16,20 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
                 this, &ChartPanelWidget::onCheckboxChanged);
     }
 
-        // --------------------------  test Даних
-        testTimer = new QTimer(this);
-        connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
-        testTimer->start(1); // 100 Гц
-        // --------------------------  test Даних
+    // --------------------------  test Даних
+    testTimer = new QTimer(this);
+    connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
+    testTimer->start(1); // 100 Гц
+    // --------------------------  test Даних
+
+    QObject *toolbarRoot = m_qmlTopBar->rootObject();
+    if (toolbarRoot) {
+        connect(toolbarRoot, SIGNAL(themeToggle()),this, SLOT(onTopBarThemeToggle()), Qt::UniqueConnection);
+        connect(toolbarRoot, SIGNAL(autoZoom()),this, SLOT(autoZoom()), Qt::UniqueConnection);
+        connect(toolbarRoot, SIGNAL(liveButt(bool)),this, SLOT(liveButt(bool)), Qt::UniqueConnection);
+        connect(toolbarRoot, SIGNAL(modeChanged(QString)), this, SLOT(modeChange(QString)), Qt::UniqueConnection);
+        connect(toolbarRoot, SIGNAL(clearSelection()), this, SLOT(clearSelection()), Qt::UniqueConnection);
+    }
 
 }
 
@@ -161,6 +170,25 @@ void ChartPanelWidget::autoZoom()
 {
     flightChart->getPlot()->rescaleAxes();
     flightChart->getPlot()->replot(QCustomPlot::rpQueuedReplot);
+}
+
+void ChartPanelWidget::modeChange(QString mode)
+{
+    if (mode == "drag") {
+        flightChart->getPlot()->setSelectionRectMode(QCP::srmNone);
+        flightChart->getPlot()->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes);
+    } else if (mode == "rect") {
+        flightChart->getPlot()->setSelectionRectMode(QCP::srmZoom);
+        flightChart->getPlot()->setInteractions(QCP::iRangeZoom | QCP::iSelectPlottables | QCP::iSelectAxes);
+    } else {
+        flightChart->getPlot()->setSelectionRectMode(QCP::srmNone);
+        flightChart->getPlot()->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes);
+    }
+}
+
+void ChartPanelWidget::liveButt(bool mode)
+{
+    flightChart->setLiveModeEnabled(mode);
 }
 
 void ChartPanelWidget::setupUi()

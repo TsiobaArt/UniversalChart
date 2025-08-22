@@ -47,5 +47,5 @@ private:
     // налаштування
     double m_timeWindowSec = 15.0;   // не використовується для видалення
     bool   m_liveModeEnabled = false;
-    int    m_liveCount = 100;
+    int    m_liveCount = 1000;
 };

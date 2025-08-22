@@ -55,6 +55,7 @@ private:
     bool m_rmbDown = false;   // Права кнопка затиснута?
 signals:
     void cursorPosChanged(double x, double y, bool inside);
+    void rightClickInDragMode();
 };
     // customPlot->axisRect()->setAutoMargins(QCP::msNone);
     // customPlot->axisRect()->setMargins(QMargins(40, 0, 0, 30)); // під себе

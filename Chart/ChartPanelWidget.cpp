@@ -43,6 +43,9 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
                                         .arg(y, 0, 'f', 2));
             });
 
+    connect(flightChart, &FlightChart::rightClickInDragMode, // настикання правою кнопкою мишкой
+            this, &ChartPanelWidget::rightClickDrag);
+
 }
 
 
@@ -261,6 +264,8 @@ void ChartPanelWidget::setupUi()
 
     windowColor = QApplication::palette().color(QPalette::Window);
     m_qmlTopBar->rootContext()->setContextProperty("appWindowColor", windowColor);
+
+    m_qmlTopBar->rootContext()->setContextProperty("chartPanel", this); // для ретранслювання сигнала в qml
     m_qmlTopBar->setSource(QUrl(QStringLiteral("qrc:/Chart_panel.qml")));
 
     // ------------------ ГРАФІК ------------------

@@ -16,6 +16,14 @@ Item {
     // alias для зміни тексту кнопки Live з C++
     // property alias liveText: liveBtnText.text
     property string currentMode: "drag"
+
+    Connections { // C++ натискання правою кнопкою мишкою в режимі перетягуванння
+        target: chartPanel
+        function onRightClickDrag() {
+            buttLive.butt.checked = false;
+        }
+    }
+
     Rectangle {
         anchors.fill: parent
         color: appWindowColor

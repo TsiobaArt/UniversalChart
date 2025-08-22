@@ -48,6 +48,12 @@ FlightChart::FlightChart(QWidget *parent)
             customPlot->rescaleAxes();
             customPlot->replot(QCustomPlot::rpQueuedReplot);
         }
+        else if (ev->button() == Qt::RightButton && customPlot->selectionRectMode() == QCP::srmNone) {
+            // режим drag: шлемо сигнал
+            double x = customPlot->xAxis->pixelToCoord(ev->pos().x());
+            double y = customPlot->yAxis->pixelToCoord(ev->pos().y());
+            emit rightClickInDragMode();
+        }
     });
 
     // ------------------------------------------------------------------------ Основна частина

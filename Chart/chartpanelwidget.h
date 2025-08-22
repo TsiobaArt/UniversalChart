@@ -51,6 +51,9 @@ private slots:
     void modeChange(QString mode);
     void liveButt(bool mode, int step);
 
+signals:
+    void rightClickDrag();
+
 private:
     // ===== GUI =====
     void setupUi();                             // <-- уся побудова інтерфейсу тут

@@ -51,7 +51,7 @@ FlightChart::FlightChart(QWidget *parent)
         }
     });
 
-
+    // ------------------------------------------------------------------------ Основна частина
     // customPlot->axisRect()->setAutoMargins(QCP::msNone);
     // customPlot->axisRect()->setMargins(QMargins(40, 0, 0, 30)); // під себе
 

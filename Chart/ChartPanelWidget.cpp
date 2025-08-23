@@ -312,16 +312,36 @@ void ChartPanelWidget::setupUi()
 
     // трошки стилю (тонка темна смуга + ховер)
     collapseBtn->setStyleSheet(R"(
-        QToolButton {
-            border: none;
-            border-left: 1px solid #333;
-            border-right: 1px solid #222;
-            background: #1f1f1f;
-        }
-        QToolButton:hover {
-            background: #262626;
-        }
-    )");
+    QToolButton {
+        border: 2px solid #444;
+        background: #ed0d1216;
+        width: 24px;
+        radius: 5;
+        border-radius: 6px;
+    }
+    QToolButton:hover {
+        border: 2px solid lightblue;   /* світло-блакитна рамка як у чекбоксів */
+        background: #ed0d1216;         /* фон залишається темним */
+    }
+    QToolButton:checked {
+        border: 2px solid lightblue;   /* коли кнопка "натиснута" — теж підсвічується */
+        background: #ed0d1216;
+    }
+)");
+
+
+    // collapseBtn->setStyleSheet(R"(
+    //     QToolButton {
+    //         border: none;
+    //         border-left: 1px solid #333;
+    //         border-right: 1px solid #222;
+    //         background: #1f1f1f;
+    //     }
+    //     QToolButton:hover {
+    //         background: #262626;
+    //     }
+    // )");
+
 
     connect(collapseBtn, &QToolButton::clicked, this, &ChartPanelWidget::toggleLeftPanel);
 

@@ -15,8 +15,6 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private slots:
-    void generateTestData();
 
 private:
     ChartPanelWidget *panel;  // ✅ панель з графіком + чекбоксами

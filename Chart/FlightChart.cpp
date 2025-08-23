@@ -150,6 +150,7 @@ void FlightChart::clearData()
 {
     clearPlot();
     dataPtr.clear();
+    customPlot->replot(QCustomPlot::rpQueuedReplot);
 }
 
 void FlightChart::setDataChart(std::vector<parametrs> &data) {

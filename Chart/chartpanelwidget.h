@@ -47,6 +47,9 @@ public:
 
 public slots:
    void  exportToCsv(const QString& path);
+   void  exportImage(const QString& pathOrUrl);
+
+
 
 private slots:
     void onCheckboxChanged();
@@ -56,6 +59,7 @@ private slots:
     void autoZoom();
     void modeChange(QString mode);
     void liveButt(bool mode, int step);
+    void deleteData();
 
 signals:
     void rightClickDrag();

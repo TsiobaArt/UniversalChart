@@ -30,6 +30,9 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
         connect(toolbarRoot, SIGNAL(modeChanged(QString)), this, SLOT(modeChange(QString)), Qt::UniqueConnection);
         connect(toolbarRoot, SIGNAL(clearSelection()), this, SLOT(clearSelection()), Qt::UniqueConnection);
         connect(toolbarRoot, SIGNAL(exportCsv(QString)), this, SLOT(exportToCsv(QString)), Qt::UniqueConnection);
+        connect(toolbarRoot, SIGNAL(exportImage(QString)), this, SLOT(exportImage(QString)),  Qt::UniqueConnection);
+        connect(toolbarRoot, SIGNAL(deleteDataChart()), this, SLOT(deleteData()),  Qt::UniqueConnection);
+
     }
 
 
@@ -46,7 +49,6 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
 
     connect(flightChart, &FlightChart::rightClickInDragMode, // настикання правою кнопкою мишкой
             this, &ChartPanelWidget::rightClickDrag);
-
 }
 
 
@@ -216,6 +218,11 @@ void ChartPanelWidget::liveButt(bool mode, int step)
     flightChart->setLiveModeEnabled(mode, step);
 }
 
+void ChartPanelWidget::deleteData()
+{
+    flightChart->clearData();
+}
+
 void ChartPanelWidget::setupUi()
 {
     // ===== ГОЛОВНИЙ ГОРИЗОНТАЛЬНИЙ ЛЕЙАУТ (ЛІВО: чекбокси, ПРАВО: панель+графік) =====
@@ -379,4 +386,41 @@ void ChartPanelWidget::exportToCsv(const QString& pathOrUrl)
             });
 
     thread->start();
+}
+
+void ChartPanelWidget::exportImage(const QString &pathOrUrl)
+{
+
+        // URL -> локальний шлях, додати суфікс якщо немає
+        QString path = QUrl(pathOrUrl).isValid() ? QUrl(pathOrUrl).toLocalFile() : pathOrUrl;
+        if (path.isEmpty()) return;
+
+        // визначимо формат із розширення
+        QString ext = QFileInfo(path).suffix().toLower();
+        if (ext.isEmpty()) { ext = "png"; path += ".png"; }
+
+        // підвищимо чіткість на HiDPI (не обов’язково)
+        const double dpr = devicePixelRatioF();
+        const int    w   = int(flightChart->getPlot()->width()  * dpr);
+        const int    h   = int(flightChart->getPlot()->height() * dpr);
+
+        // на всяк випадок — актуалізуємо малюнок
+        flightChart->getPlot()->replot();
+
+        bool ok = false;
+        if (ext == "png")
+            ok = flightChart->getPlot()->savePng(path, w, h, 2.0 /*dpiScale*/);
+        else if (ext == "jpg" || ext == "jpeg")
+            ok = flightChart->getPlot()->saveJpg(path, w, h, 90 /*quality*/);
+        else if (ext == "bmp")
+            ok = flightChart->getPlot()->saveBmp(path, w, h);
+        else if (ext == "pdf")
+            ok = flightChart->getPlot()->savePdf(path); // PDF сам векторний, без w/h
+        else {
+            // незнайомий формат — спробуємо як PNG
+            ok = flightChart->getPlot()->savePng(path + ".png", w, h, 2.0);
+        }
+
+        qDebug() << "Image export:" << ok << path;
+
 }

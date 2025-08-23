@@ -40,6 +40,10 @@ public:
 
     const std::vector<parametrs>& rawData() const { return dataPtr; }
 
+public slots:
+    void onLegendClick(QCPLegend* legend, QCPAbstractLegendItem* item, QMouseEvent* ev);
+
+
 private:
     void updateLiveWindow(double currentX);
 
@@ -52,6 +56,8 @@ private:
     bool   m_liveModeEnabled = false;
     int    m_liveCount = 1000;
 
+    // допоміжне: встановити колір графіка за ключем
+    void setSeriesColorByKey(const QString& key, const QColor& c);
 
 private:
     bool m_rmbDown = false;   // Права кнопка затиснута?

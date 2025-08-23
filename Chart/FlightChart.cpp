@@ -77,6 +77,23 @@ FlightChart::FlightChart(QWidget *parent)
         emit cursorPosChanged(x, y, true);
     });
 
+
+    //  дозвіл на вибір елементів легенди
+    customPlot->legend->setSelectableParts(QCPLegend::spItems);
+
+    // взаємодії: додаємо iSelectLegend
+    customPlot->setInteractions(
+        QCP::iRangeDrag |
+        QCP::iRangeZoom |
+        QCP::iSelectAxes |
+        QCP::iSelectPlottables |
+        QCP::iSelectLegend
+        );
+
+    // підписка на клік по легенді
+    connect(customPlot, &QCustomPlot::legendClick,
+            this, &FlightChart::onLegendClick);
+
 }
 
 FlightChart::~FlightChart() {}
@@ -244,7 +261,6 @@ void FlightChart::updateLiveWindow(double currentX)
     customPlot->xAxis->setRange(QCPRange(left, currentX));
 }
 
-
 void FlightChart::setLiveModeEnabled(bool on, int step)
 {
     m_liveCount = step;
@@ -260,4 +276,57 @@ void FlightChart::setLiveModeEnabled(bool on, int step)
     updateLiveWindow(rightX);
 }
 
+void FlightChart::onLegendClick(QCPLegend* /*legend*/,
+                                QCPAbstractLegendItem* item,
+                                QMouseEvent* ev)
+{
+    if (!item || ev->button() != Qt::LeftButton) return;
 
+    // Дістаємо графік з елемента легенди
+    auto *pli = qobject_cast<QCPPlottableLegendItem*>(item);
+    if (!pli) return;
+    auto *graph = qobject_cast<QCPGraph*>(pli->plottable());
+    if (!graph) return;
+
+    // Знаходимо ключ поля за графіком
+    const QString key = graphKeyByPtr.value(graph);
+    if (key.isEmpty()) return;
+
+    // Вихідний колір
+    const QColor cur = graph->pen().color();
+
+    // Діалог вибору кольору
+    const QColor chosen = QColorDialog::getColor(cur, this,
+                                                 tr("Обрати колір для: %1").arg(graph->name()));
+    if (!chosen.isValid()) return;
+
+    // 1) Міняємо колір лінії
+    QPen p = graph->pen();
+    p.setColor(chosen);
+    graph->setPen(p);
+
+    // 2) Оновлюємо FieldSpec у контейнері (щоб зберігся новий колір)
+    if (auto spec = findFieldByKey(key)) {
+        spec->color = chosen;
+    }
+
+    customPlot->replot(QCustomPlot::rpQueuedReplot);
+}
+
+
+void FlightChart::setSeriesColorByKey(const QString& key, const QColor& c)
+{
+    // оновити контейнер
+    if (auto spec = findFieldByKey(key)) {
+        spec->color = c;
+    }
+    // оновити існуючий графік, якщо намальований
+    for (int i = 0; i < customPlot->graphCount(); ++i) {
+        auto *g = customPlot->graph(i);
+        if (graphKeyByPtr.value(g) == key) {
+            QPen p = g->pen();
+            p.setColor(c);
+            g->setPen(p);
+        }
+    }
+}

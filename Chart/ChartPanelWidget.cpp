@@ -337,31 +337,6 @@ QString ChartPanelWidget::checkboxQss() const
     )");
 }
 
-// void ChartPanelWidget::exportToCsv(const QString& path)
-// {
-//     CsvExporter* exporter = new CsvExporter;
-
-//     // щоб можна було запустити в окремому потоці
-//     QThread* thread = new QThread;
-//     exporter->moveToThread(thread);
-
-//     connect(thread, &QThread::started, this, [this, exporter, path]{
-//         const auto keys = selectedKeys();
-//         const auto& data = flightChart->rawData();
-//         exporter->exportSelected(data, keys, path);
-
-//     });
-
-//     connect(exporter, &CsvExporter::exportFinished,
-//             this, [thread, exporter](bool success, QString path){
-//                 qDebug() << "CSV export finished:" << success << path;
-//                 exporter->deleteLater();
-//                 thread->quit();
-//                 thread->deleteLater();
-//             });
-
-//     thread->start();
-// }
 
 void ChartPanelWidget::exportToCsv(const QString& pathOrUrl)
 {

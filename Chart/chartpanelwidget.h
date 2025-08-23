@@ -23,6 +23,9 @@
 #include <QQuickItem>
 #include <qapplication.h>
 #include "csvexporter.h"
+#include <QPropertyAnimation>
+#include <qtoolbutton.h>
+
 class QCheckBox;
 class QLabel;
 class QPushButton;
@@ -60,6 +63,7 @@ private slots:
     void modeChange(QString mode);
     void liveButt(bool mode, int step);
     void deleteData();
+    void toggleLeftPanel();
 
 signals:
     void rightClickDrag();
@@ -86,6 +90,12 @@ private:
     QTimer *testTimer = nullptr;
 
     QLabel *coordLabel = nullptr;
+
+    QWidget* leftPanel = nullptr;        // уже є у тебе
+    QWidget* rightCol  = nullptr;        // уже є у тебе
+    QToolButton* collapseBtn = nullptr;  // нове: ручка-стрілка
+    bool leftCollapsed = false;
+    int  leftExpandedWidth = 300;        // ширина, коли панель відкрита
 
 };
 // ChartPanelWidget::ChartPanelWidget(QWidget *parent)  //  ОСТАННЯ ВЕРІСЯ ПРИБРАТИ  setupUi і вставити на міця

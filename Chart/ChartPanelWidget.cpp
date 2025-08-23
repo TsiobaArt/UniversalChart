@@ -260,7 +260,6 @@ void ChartPanelWidget::setupUi()
     scrollArea->setWidget(checkboxContent);
     scrollArea->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
-    QWidget *leftPanel = new QWidget;
     leftPanel = new QWidget;
     auto *leftPanelLayout = new QVBoxLayout(leftPanel);
     leftPanelLayout->setContentsMargins(0, 0, 0, 0);
@@ -269,7 +268,7 @@ void ChartPanelWidget::setupUi()
     leftPanel->setMaximumWidth(300); // або за бажанням: setMinimumWidth(250), setMaximumWidth(350)
 
     // ------------------ ПРАВА КОЛОНКА: QML ПАНЕЛЬ + ГРАФІК ------------------
-    QWidget *rightCol = new QWidget;
+    rightCol = new QWidget;
     auto *rightColLayout = new QVBoxLayout(rightCol);
     rightColLayout->setContentsMargins(0, 0, 0, 0);
     rightColLayout->setSpacing(5);
@@ -301,6 +300,37 @@ void ChartPanelWidget::setupUi()
     rootRow->addWidget(rightCol, 1);   // правий стовпчик: панель+графік
 
 
+    // ------------------------------ кнопка для заїду чек боксів
+    // Ручка-стрілка між панелями:
+    collapseBtn = new QToolButton(this);
+    collapseBtn->setAutoRaise(true);
+    collapseBtn->setCheckable(true);
+    collapseBtn->setFixedWidth(18);
+    collapseBtn->setArrowType(Qt::LeftArrow); // спочатку показує «згорнути»
+    collapseBtn->setCursor(Qt::PointingHandCursor);
+    collapseBtn->setToolTip(tr("Згорнути/розгорнути панель"));
+
+    // трошки стилю (тонка темна смуга + ховер)
+    collapseBtn->setStyleSheet(R"(
+        QToolButton {
+            border: none;
+            border-left: 1px solid #333;
+            border-right: 1px solid #222;
+            background: #1f1f1f;
+        }
+        QToolButton:hover {
+            background: #262626;
+        }
+    )");
+
+    connect(collapseBtn, &QToolButton::clicked, this, &ChartPanelWidget::toggleLeftPanel);
+
+    // Збірка (ручка між лівою та правою частиною):
+    rootRow->addWidget(leftPanel);      // лівий стовпчик: чекбокси
+    rootRow->addWidget(collapseBtn);    // ручка
+    rootRow->addWidget(rightCol, 1);    // права частина
+
+
     // у setupUi(), одразу після створення правої колонки та flightChart:
     coordLabel = new QLabel("x: —    y: —", rightCol);
     coordLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -309,10 +339,17 @@ void ChartPanelWidget::setupUi()
         "QLabel{color:white;padding:0 8px;font-family:'DejaVu Sans Mono',Consolas,monospace;"
         "font-size:14px;background:transparent;}"
         );
+    // ------------------------------ кнопка для заїду чек боксів
+
+
 
     // ДОДАЙ ПІСЛЯ графіка:
     rightColLayout->addWidget(flightChart, 1);
     rightColLayout->addWidget(coordLabel);
+
+
+
+
 
 }
 
@@ -423,4 +460,35 @@ void ChartPanelWidget::exportImage(const QString &pathOrUrl)
 
         qDebug() << "Image export:" << ok << path;
 
+}
+void ChartPanelWidget::toggleLeftPanel()
+{
+    leftCollapsed = !leftCollapsed;
+
+    // На всякий — запам’ятаємо актуальну ширину як «розгорнуту», якщо користувач міняв її вручну
+    if (!leftCollapsed) {
+        // відкриваємо назад — якщо раптом ширина була 0, повернемо до last known
+        if (leftExpandedWidth < 120) leftExpandedWidth = 300;
+    } else {
+        // коли згортаємо — збережемо поточну ширину як «розгорнуту» на майбутнє
+        leftExpandedWidth = leftPanel->width();
+        if (leftExpandedWidth < 120) leftExpandedWidth = 300;
+    }
+
+    // Плавна анімація властивості maximumWidth (працює стабільно)
+    auto *anim = new QPropertyAnimation(leftPanel, "maximumWidth", this);
+    anim->setDuration(180);
+    anim->setEasingCurve(QEasingCurve::InOutCubic);
+    anim->setStartValue(leftPanel->maximumWidth());
+
+    if (leftCollapsed) {
+        leftPanel->setMinimumWidth(0);
+        anim->setEndValue(0);
+        collapseBtn->setArrowType(Qt::RightArrow); // вказує, що можна розгорнути
+    } else {
+        anim->setEndValue(leftExpandedWidth);
+        collapseBtn->setArrowType(Qt::LeftArrow);  // вказує, що можна згорнути
+    }
+
+    anim->start(QAbstractAnimation::DeleteWhenStopped);
 }

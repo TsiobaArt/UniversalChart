@@ -74,6 +74,8 @@ Item {
             source: "qrc:/Icon/drag.svg"
             butt.checkable: true
             butt.checked: true
+            tooltip: "Режим перетягування (Drag)"
+            tipsEnabled: buttToopTips.butt.checked ? true : false
             butt.onClicked: {
                 root.currentMode="drag";
                 root.modeChanged("drag"); }
@@ -83,6 +85,8 @@ Item {
             id: buttZoomArea
             source: "qrc:/Icon/zoom4.svg"
             butt.checkable: true
+            tooltip: "Режим зумування (Rect)"
+            tipsEnabled: buttToopTips.butt.checked ? true : false
             butt.onClicked: {
                 root.currentMode="rect";
                 root.modeChanged("rect"); }
@@ -92,6 +96,8 @@ Item {
             source: "qrc:/Icon/live.svg"
             butt.checkable: true
             butt.autoExclusive: false
+            tooltip: "Показати останні точки"
+            tipsEnabled: buttToopTips.butt.checked ? true : false
             Component.onCompleted: butt.checked = false
             butt.onCheckedChanged: {
                 root.liveButt(butt.checked, liveCountSpin.value)
@@ -119,6 +125,9 @@ Item {
         CustomButton_Image {
             id: buttExpend
             source: "qrc:/Icon/expand.svg"
+            tipsEnabled: buttToopTips.butt.checked ? true : false
+            tooltip: "ЛКМ автозум ХУ, ПКМ автозум X"
+
             butt.onClicked: {
             root.autoZoom();
             }
@@ -136,6 +145,8 @@ Item {
         CustomButton_Image {
             id: buttClearCheckBox
             source: "qrc:/Icon/clear.svg"
+            tipsEnabled: buttToopTips.butt.checked ? true : false
+            tooltip: "Очистити чекбокси"
             butt.onClicked:  {
                 root.clearSelection();
             }
@@ -143,6 +154,8 @@ Item {
         CustomButton_Image {
             id: buttExportCsv
             source: "qrc:/Icon/csv.svg"
+            tipsEnabled: buttToopTips.butt.checked ? true : false
+            tooltip: "Зберегти вибране в csv"
             butt.onClicked: {
             csvSaveDialog.open()
             }
@@ -151,6 +164,8 @@ Item {
         CustomButton_Image {
             id: buttSaveChart
             source: "qrc:/Icon/image.svg"
+            tipsEnabled: buttToopTips.butt.checked ? true : false
+            tooltip: "Зберегти графік як картинку"
             butt.onClicked: {
             imageSaveDialog.open()
             }
@@ -158,10 +173,14 @@ Item {
         CustomButton_Image {
             id: buttTheme
             source: "qrc:/Icon/theme.svg"
+            tipsEnabled: buttToopTips.butt.checked ? true : false
+            tooltip: "Тема"
         }
         CustomButton_Image {
             id: buttDelete
             source: "qrc:/Icon/delete.svg"
+            tipsEnabled: buttToopTips.butt.checked ? true : false
+            tooltip: "Очистити дані з графіка"
             butt.onClicked: {
             deleteDataChart();
             }
@@ -171,6 +190,8 @@ Item {
             source: "qrc:/Icon/info.svg"
             butt.checkable: true
             butt.autoExclusive: false
+            tipsEnabled: true
+            tooltip: "Включити підказки"
             Component.onCompleted: butt.checked = false
         }
     }

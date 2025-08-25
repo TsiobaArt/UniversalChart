@@ -188,7 +188,7 @@ void ChartPanelWidget::generateTestDataCount(int count)
     for (int i = 0; i < count; ++i) {
         parametrs p{};
 
-        p.time =i;
+        p.time =i * 0.001;
         p.v_ground    = rnd(200.0, 250.0);
         p.vx          = p.v_ground + rnd(-2.0, 2.0);
         p.vy          = rnd(-5.0, 5.0);

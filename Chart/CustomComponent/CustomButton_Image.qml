@@ -46,42 +46,27 @@ Rectangle {
         text: tooltip
         delay: 180
         timeout: 2000
+        popupType: Popup.Item
         // padding: 8
         font.pixelSize: 13
         // parent: Overlay.overlay
         parent: butt
-
-        // Регульований відступ під кнопкою
-        property int offsetY: 100000
-        property int offsetX: 0
-
-        // ПІД кнопкою, ПО ЦЕНТРУ — чисті біндинги (перерахуються при зміні offsetX/Y)
-        x: {
-            const p = butt.mapToItem(parent, butt.width/2, butt.height); // центр низу кнопки
-            return Math.round(p.x - tip.implicitWidth/2 + offsetX);
-        }
-        y: {
-            const p = butt.mapToItem(parent, 0, butt.height);
-            return Math.round(p.y + offsetY);
-        }
-
-        // системний вигляд можна залишити; нижче лише текст
         contentItem: Text {
             text: tip.text
             color: "white"
             wrapMode: Text.WordWrap
             font.pixelSize: 13
-            width: 220                   // макс. ширина тултіпа
+            width: 220
         }
 
         // «стрілочка» зверху (бо тултіп під кнопкою), по центру тултіпа
         background: Rectangle {
             radius: 6
-            color: "#1f1f1f"
+            color: "#ed0d1216"
             border.color: "lightblue"
             border.width: 1
 
-            Rectangle {
+            Rectangle { // стрілочка
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: -5
                 width: 10; height: 10
@@ -92,5 +77,4 @@ Rectangle {
             }
         }
     }
-
 }

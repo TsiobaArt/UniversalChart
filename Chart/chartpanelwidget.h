@@ -43,6 +43,7 @@ public:
     void appendDataStep(parametrs data);
     void clearData();
     void generateTestData();
+    void generateTestDataCount(int count);
     QColor windowColor ;
 
     QStringList selectedKeys() const;

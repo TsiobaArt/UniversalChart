@@ -50,6 +50,7 @@ private:
     QCustomPlot* customPlot = nullptr;
     std::vector<parametrs> dataPtr;
     QHash<QCPGraph*, QString> graphKeyByPtr; // graph -> field key
+    QHash<QString, QColor> m_userColors;     // key -> user override color
 
     // налаштування
     double m_timeWindowSec = 15.0;   // не використовується для видалення

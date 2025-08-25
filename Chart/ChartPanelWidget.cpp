@@ -16,11 +16,15 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
                 this, &ChartPanelWidget::onCheckboxChanged);
     }
 
-    // --------------------------  test Даних
-    testTimer = new QTimer(this);
-    connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
-    testTimer->start(100); // 100 Гц
-    // --------------------------  test Даних
+    // // --------------------------  test Даних
+    // testTimer = new QTimer(this);
+    // connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
+    // testTimer->start(100); // 100 Гц
+    // // --------------------------  test Даних
+
+    // ------------------------------  test Даних на кіклькість
+    generateTestDataCount(1000000);
+    // ------------------------------ test Даних на кількість
 
     QObject *toolbarRoot = m_qmlTopBar->rootObject();
     if (toolbarRoot) {
@@ -162,6 +166,79 @@ void ChartPanelWidget::generateTestData()
     t += dt;
 }
 
+void ChartPanelWidget::generateTestDataCount(int count)
+{
+    if (count <= 0) return;
+
+    // Якщо твій тестовий таймер крутиться — зупинимо, щоб не мішався
+    const bool timerWasRunning = (testTimer && testTimer->isActive());
+    if (timerWasRunning) testTimer->stop();
+
+    // Якщо графіки ще не створені (жоден чекбокс не вибраний) — увімкнемо дефолтні
+    if (flightChart->getPlot()->graphCount() == 0) {
+        onCheckboxChanged();
+    }
+
+    auto rnd = [](double a, double b){
+        return a + (b - a) * QRandomGenerator::global()->generateDouble();
+    };
+
+    // Генеруємо і додаємо БЕЗ проміжних перепобудов
+    for (int i = 0; i < count; ++i) {
+        parametrs p{};
+
+        p.time =i*5;
+        p.v_ground    = rnd(200.0, 250.0);
+        p.vx          = p.v_ground + rnd(-2.0, 2.0);
+        p.vy          = rnd(-5.0, 5.0);
+        p.vz          = rnd(-2.0, 2.0);
+
+        p.wx          = qDegreesToRadians(rnd(-2.0, 2.0));
+        p.wy          = qDegreesToRadians(rnd(-2.0, 2.0));
+        p.wz          = qDegreesToRadians(rnd(-2.0, 2.0));
+
+        p.angleWx     = rnd(-1.0, 1.0);
+        p.angleWy     = rnd(-1.0, 1.0);
+        p.angleWz     = rnd(-1.0, 1.0);
+
+        p.teta        = qDegreesToRadians(rnd(-10.0, 10.0));
+        p.gamma       = qDegreesToRadians(rnd(-30.0, 30.0));
+        p.psi         = qDegreesToRadians(rnd(0.0, 360.0));
+
+        p.alfa        = qDegreesToRadians(rnd(-2.0, 8.0));
+        p.beta        = qDegreesToRadians(rnd(-3.0, 3.0));
+
+        p.machNumber  = rnd(0.6, 0.9);
+        p.altitude_wgs= rnd(100.0, 200.0);
+
+        p.nx          = rnd(-0.2, 0.2);
+        p.ny          = rnd(-0.2, 0.2);
+        p.nz          = 1.0 + rnd(-0.05, 0.05);
+
+        p.mx          = rnd(-100.0, 100.0);
+        p.my          = rnd(-100.0, 100.0);
+        p.mz          = rnd(-100.0, 100.0);
+
+        p.deltaChannel1 = rnd(-5.0, 5.0);
+        p.deltaChannel2 = rnd(-5.0, 5.0);
+        p.deltaElerons  = rnd(-5.0, 5.0);
+
+        // координати/масо-тяга — як хочеш
+        p.xg += rnd(-3.0, 3.0);
+        p.yg += rnd(-3.0, 3.0);
+        p.zg += rnd(-1.0, 1.0);
+        p.mass  = rnd(500.0, 600.0);
+        p.trust = rnd(2000.0, 3000.0);
+
+        // Додаємо прямо у FlightChart, БЕЗ scheduleReplot() з Panel
+        flightChart->appendDataChart(p);
+    }
+
+    // Один фінальний реплот
+    flightChart->getPlot()->replot(QCustomPlot::rpQueuedReplot);
+}
+
+
 QStringList ChartPanelWidget::selectedKeys() const
 {
     QStringList keys;
@@ -295,11 +372,7 @@ void ChartPanelWidget::setupUi()
     // rightColLayout->addWidget(flightChart, 1);
     // rightColLayout->addWidget(m_qmlTopBar);
 
-    // ------------------ ЗБІР ВСЬОГО ------------------
-    rootRow->addWidget(leftPanel);     // лівий стовпчик: чекбокси
-    rootRow->addWidget(rightCol, 1);   // правий стовпчик: панель+графік
-
-
+   // ------------------ ЗБІР ВСЬОГО ------------------
     // ------------------------------ кнопка для заїду чек боксів
     // Ручка-стрілка між панелями:
     collapseBtn = new QToolButton(this);
@@ -316,7 +389,7 @@ void ChartPanelWidget::setupUi()
         border: 2px solid #444;
         background: #ed0d1216;
         width: 24px;
-        radius: 5;
+        /*  radius: 5; */
         border-radius: 6px;
     }
     QToolButton:hover {

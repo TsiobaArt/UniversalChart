@@ -200,11 +200,11 @@ void FlightChart::appendDataChart(parametrs &data)
     }
     // replot робить панель (throttle)
 }
-
 void FlightChart::plotSelectedFields(const QStringList &keys)
 {
     customPlot->clearGraphs();
     graphKeyByPtr.clear();
+
     for (const QString &key : keys)
     {
         auto spec = findFieldByKey(key);
@@ -217,11 +217,14 @@ void FlightChart::plotSelectedFields(const QStringList &keys)
         if (!spec->unit.isEmpty()) title += " [" + spec->unit + "]";
         graph->setName(title);
 
-        QPen pen(spec->color);
+        // ⬇️ ГОЛОВНЕ МІСЦЕ: беремо колір з override, якщо є
+        const QColor baseColor = spec->color;
+        const QColor useColor  = m_userColors.value(spec->key, baseColor);
+
+        QPen pen(useColor);
         pen.setWidth(1);
         graph->setPen(pen);
 
-        // [OPTIM] Adaptive sampling завжди вкл
         graph->setAdaptiveSampling(true);
 
         QVector<double> x, y;
@@ -232,13 +235,50 @@ void FlightChart::plotSelectedFields(const QStringList &keys)
             y.append(spec->getter(d));
         }
         graph->setData(x, y);
-
-
     }
 
     customPlot->legend->setVisible(true);
     customPlot->replot(QCustomPlot::rpQueuedReplot);
 }
+
+// void FlightChart::plotSelectedFields(const QStringList &keys)
+// {
+//     customPlot->clearGraphs();
+//     graphKeyByPtr.clear();
+//     for (const QString &key : keys)
+//     {
+//         auto spec = findFieldByKey(key);
+//         if (!spec) continue;
+
+//         QCPGraph *graph = customPlot->addGraph();
+//         graphKeyByPtr[graph] = spec->key;
+
+//         QString title = spec->label;
+//         if (!spec->unit.isEmpty()) title += " [" + spec->unit + "]";
+//         graph->setName(title);
+
+//         QPen pen(spec->color);
+//         pen.setWidth(1);
+//         graph->setPen(pen);
+
+//         // [OPTIM] Adaptive sampling завжди вкл
+//         graph->setAdaptiveSampling(true);
+
+//         QVector<double> x, y;
+//         x.reserve(static_cast<int>(dataPtr.size()));
+//         y.reserve(static_cast<int>(dataPtr.size()));
+//         for (const auto &d : dataPtr) {
+//             x.append(d.time);
+//             y.append(spec->getter(d));
+//         }
+//         graph->setData(x, y);
+
+
+//     }
+
+//     customPlot->legend->setVisible(true);
+//     customPlot->replot(QCustomPlot::rpQueuedReplot);
+// }
 
 void FlightChart::updateLiveWindow(double currentX)
 {
@@ -276,36 +316,71 @@ void FlightChart::setLiveModeEnabled(bool on, int step)
     updateLiveWindow(rightX);
 }
 
+// void FlightChart::onLegendClick(QCPLegend* /*legend*/,
+//                                 QCPAbstractLegendItem* item,
+//                                 QMouseEvent* ev)
+// {
+//     if (!item || ev->button() != Qt::LeftButton) return;
+
+//     // Дістаємо графік з елемента легенди
+//     auto *pli = qobject_cast<QCPPlottableLegendItem*>(item);
+//     if (!pli) return;
+//     auto *graph = qobject_cast<QCPGraph*>(pli->plottable());
+//     if (!graph) return;
+
+//     // Знаходимо ключ поля за графіком
+//     const QString key = graphKeyByPtr.value(graph);
+//     if (key.isEmpty()) return;
+
+//     // Вихідний колір
+//     const QColor cur = graph->pen().color();
+
+//     // Діалог вибору кольору
+//     const QColor chosen = QColorDialog::getColor(cur, this,
+//                                                  tr("Обрати колір для: %1").arg(graph->name()));
+//     if (!chosen.isValid()) return;
+
+//     // 1) Міняємо колір лінії
+//     QPen p = graph->pen();
+//     p.setColor(chosen);
+//     graph->setPen(p);
+
+//     // 2) Оновлюємо FieldSpec у контейнері (щоб зберігся новий колір)
+//     if (auto spec = findFieldByKey(key)) {
+//         spec->color = chosen;
+//     }
+
+//     customPlot->replot(QCustomPlot::rpQueuedReplot);
+// }
 void FlightChart::onLegendClick(QCPLegend* /*legend*/,
                                 QCPAbstractLegendItem* item,
                                 QMouseEvent* ev)
 {
     if (!item || ev->button() != Qt::LeftButton) return;
 
-    // Дістаємо графік з елемента легенди
-    auto *pli = qobject_cast<QCPPlottableLegendItem*>(item);
+    auto *pli   = qobject_cast<QCPPlottableLegendItem*>(item);
     if (!pli) return;
     auto *graph = qobject_cast<QCPGraph*>(pli->plottable());
     if (!graph) return;
 
-    // Знаходимо ключ поля за графіком
     const QString key = graphKeyByPtr.value(graph);
     if (key.isEmpty()) return;
 
-    // Вихідний колір
     const QColor cur = graph->pen().color();
 
-    // Діалог вибору кольору
     const QColor chosen = QColorDialog::getColor(cur, this,
                                                  tr("Обрати колір для: %1").arg(graph->name()));
     if (!chosen.isValid()) return;
 
-    // 1) Міняємо колір лінії
+    // 1) Міняємо колір лише у графіка зараз
     QPen p = graph->pen();
     p.setColor(chosen);
     graph->setPen(p);
 
-    // 2) Оновлюємо FieldSpec у контейнері (щоб зберігся новий колір)
+    // 2) ⬇️ ПЕРСИСТИМО override, щоб не злітав при перебудові
+    m_userColors[key] = chosen;
+
+    // 3) (необов’язково) Оновити дефолт у реєстрі полів, якщо є єдиний контейнер
     if (auto spec = findFieldByKey(key)) {
         spec->color = chosen;
     }

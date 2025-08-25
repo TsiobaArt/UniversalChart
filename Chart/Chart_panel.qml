@@ -18,6 +18,7 @@ Item {
     signal exportCsv(string path)
     signal exportImage(string path)
     signal deleteDataChart();
+    signal autoZoomX();
     // alias для зміни тексту кнопки Live з C++
     // property alias liveText: liveBtnText.text
     property string currentMode: "drag"
@@ -120,6 +121,15 @@ Item {
             source: "qrc:/Icon/expand.svg"
             butt.onClicked: {
             root.autoZoom();
+            }
+            MouseArea {
+                anchors.fill: buttExpend.butt      // лише поверх самої кнопки
+                acceptedButtons: Qt.RightButton
+                onClicked: (mouse) => {
+                    // Тут і так буде RightButton, але хай буде явна перевірка
+                    if (mouse.button === Qt.RightButton)
+                        root.autoZoomX();
+                }
             }
         }
 

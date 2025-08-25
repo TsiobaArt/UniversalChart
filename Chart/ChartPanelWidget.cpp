@@ -23,7 +23,7 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     // // --------------------------  test Даних
 
     // ------------------------------  test Даних на кіклькість
-    generateTestDataCount(1000000);
+    generateTestDataCount(120000);
     // ------------------------------ test Даних на кількість
 
     QObject *toolbarRoot = m_qmlTopBar->rootObject();
@@ -36,6 +36,7 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
         connect(toolbarRoot, SIGNAL(exportCsv(QString)), this, SLOT(exportToCsv(QString)), Qt::UniqueConnection);
         connect(toolbarRoot, SIGNAL(exportImage(QString)), this, SLOT(exportImage(QString)),  Qt::UniqueConnection);
         connect(toolbarRoot, SIGNAL(deleteDataChart()), this, SLOT(deleteData()),  Qt::UniqueConnection);
+        connect(toolbarRoot, SIGNAL(autoZoomX()), this, SLOT(autoZoomX()),  Qt::UniqueConnection);
 
     }
 
@@ -187,7 +188,7 @@ void ChartPanelWidget::generateTestDataCount(int count)
     for (int i = 0; i < count; ++i) {
         parametrs p{};
 
-        p.time =i*5;
+        p.time =i;
         p.v_ground    = rnd(200.0, 250.0);
         p.vx          = p.v_ground + rnd(-2.0, 2.0);
         p.vy          = rnd(-5.0, 5.0);
@@ -293,6 +294,7 @@ void ChartPanelWidget::modeChange(QString mode)
 void ChartPanelWidget::liveButt(bool mode, int step)
 {
     flightChart->setLiveModeEnabled(mode, step);
+    flightChart->getPlot()->replot(QCustomPlot::rpQueuedReplot);
 }
 
 void ChartPanelWidget::deleteData()
@@ -584,4 +586,73 @@ void ChartPanelWidget::toggleLeftPanel()
     }
 
     anim->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+// void ChartPanelWidget::autoZoomX()
+// {
+//     QCustomPlot* plot = flightChart ? flightChart->getPlot() : nullptr;
+//     if (!plot || plot->graphCount() == 0)
+//         return;
+
+//     // Масштабуємо лише X-вісь для всіх графіків,
+//     // поточний діапазон Y НЕ чіпаємо.
+//     for (int i = 0; i < plot->graphCount(); ++i) {
+//         plot->graph(i)->rescaleKeyAxis(true); // true = враховувати лише видимі дані
+//     }
+
+//     plot->replot(QCustomPlot::rpQueuedReplot);
+// }
+void ChartPanelWidget::autoZoomX()
+{
+    QCustomPlot* plot = flightChart ? flightChart->getPlot() : nullptr;
+    if (!plot || plot->graphCount() == 0)
+        return;
+
+    // Знайдемо глобальні min/max X серед усіх графіків (видимих)
+    double minX =  std::numeric_limits<double>::infinity();
+    double maxX = -std::numeric_limits<double>::infinity();
+
+    for (int i = 0; i < plot->graphCount(); ++i) {
+        QCPGraph* g = plot->graph(i);
+        if (!g || !g->visible()) continue;
+        const auto *container = g->data().data(); // QSharedPointer<QCPGraphDataContainer>
+        if (!container || container->isEmpty()) continue;
+
+        // Контейнер відсортований за key
+        auto itBegin = container->constBegin();
+        auto itEnd   = container->constEnd();
+        --itEnd; // останній елемент
+
+        double firstKey = itBegin->key;
+        double lastKey  = itEnd->key;
+
+        if (firstKey < minX) minX = firstKey;
+        if (lastKey  > maxX) maxX = lastKey;
+    }
+
+    if (!std::isfinite(minX) || !std::isfinite(maxX)) {
+        // Немає даних — нічого масштабувати
+        return;
+    }
+
+    // Додамо невеликий відступ (2%)
+    double span = maxX - minX;
+    if (span <= 0) span = 1.0;        // щоб не було нульового діапазону
+    double pad = span * 0.02;
+
+    // Якщо всі графіки сидять на ГОЛОВНІЙ осі xAxis:
+    // plot->xAxis->setRange(minX - pad, maxX + pad);
+
+    // Якщо графіки можуть бути на різних осях X — розтягнемо КОЖНУ їхню вісь окремо:
+    QSet<QCPAxis*> touchedAxes;
+    for (int i = 0; i < plot->graphCount(); ++i) {
+        QCPGraph* g = plot->graph(i);
+        if (!g || !g->visible()) continue;
+        QCPAxis* xax = g->keyAxis();
+        if (!xax || touchedAxes.contains(xax)) continue;
+        xax->setRange(minX - pad, maxX + pad);
+        touchedAxes.insert(xax);
+    }
+
+    plot->replot(); // краще негайно
 }

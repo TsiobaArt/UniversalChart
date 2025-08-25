@@ -65,6 +65,7 @@ private slots:
     void liveButt(bool mode, int step);
     void deleteData();
     void toggleLeftPanel();
+    void autoZoomX();
 
 signals:
     void rightClickDrag();

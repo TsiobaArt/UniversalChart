@@ -46,11 +46,10 @@ Rectangle {
         text: tooltip
         delay: 180
         timeout: 2000
-        popupType: Popup.Item
-        // padding: 8
-        font.pixelSize: 13
-        // parent: Overlay.overlay
+        font.pixelSize: 8
         parent: butt
+
+        margins: -5
         contentItem: Text {
             text: tip.text
             color: "white"

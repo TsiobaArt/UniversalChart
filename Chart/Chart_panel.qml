@@ -7,8 +7,9 @@ import QtQuick.Dialogs
 Item {
     id: root
     // QML диктує бажаний розмір:
-    implicitWidth: 640
-    implicitHeight: 56
+    // implicitWidth: 640
+    // implicitHeight: 56
+    anchors.fill: parent
     signal themeToggle()
     signal autoZoom()
     signal liveButt(bool mode, int step)

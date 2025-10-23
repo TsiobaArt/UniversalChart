@@ -16,15 +16,15 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
                 this, &ChartPanelWidget::onCheckboxChanged);
     }
 
-    // // --------------------------  test Даних
-    // testTimer = new QTimer(this);
-    // connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
-    // testTimer->start(100); // 100 Гц
-    // // --------------------------  test Даних
+    // --------------------------  test Даних
+    testTimer = new QTimer(this);
+    connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
+    testTimer->start(1); // 100 Гц
+    // --------------------------  test Даних
 
-    // ------------------------------  test Даних на кіклькість
-    generateTestDataCount(120000);
-    // ------------------------------ test Даних на кількість
+    // // ------------------------------  test Даних на кіклькість
+    // generateTestDataCount(120000);
+    // // ------------------------------ test Даних на кількість
 
     QObject *toolbarRoot = m_qmlTopBar->rootObject();
     if (toolbarRoot) {

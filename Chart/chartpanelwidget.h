@@ -85,7 +85,7 @@ private:
     // throttle перемальовки
     bool mReplotScheduled = false;
     QElapsedTimer mLastReplot;
-    int mMinReplotIntervalMs = 16; //  16 мс ~60 FPS    20 мс ~50 FPS
+    int mMinReplotIntervalMs = 100; //  16 мс ~60 FPS    20 мс ~50 FPS
 
     // Live кнопка
     QPushButton *liveBtn = nullptr;

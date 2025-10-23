@@ -24,7 +24,7 @@ FlightChart::FlightChart(QWidget *parent)
 
 
     // [OPTIM] Прибрати хіту-тести по легенді (менше навантаження)
-    customPlot->legend->setSelectableParts(QCPLegend::spNone);
+    // customPlot->legend->setSelectableParts(QCPLegend::spNone);
     // [OPTIM] Зробити легенду прозорою (менше малювання фону)
     customPlot->legend->setBrush(Qt::NoBrush);
 
@@ -200,6 +200,7 @@ void FlightChart::appendDataChart(parametrs &data)
     }
     // replot робить панель (throttle)
 }
+
 void FlightChart::plotSelectedFields(const QStringList &keys)
 {
     customPlot->clearGraphs();
@@ -217,7 +218,7 @@ void FlightChart::plotSelectedFields(const QStringList &keys)
         if (!spec->unit.isEmpty()) title += " [" + spec->unit + "]";
         graph->setName(title);
 
-        // ⬇️ ГОЛОВНЕ МІСЦЕ: беремо колір з override, якщо є
+        // колір з override, якщо є
         const QColor baseColor = spec->color;
         const QColor useColor  = m_userColors.value(spec->key, baseColor);
 
@@ -227,6 +228,28 @@ void FlightChart::plotSelectedFields(const QStringList &keys)
 
         graph->setAdaptiveSampling(true);
 
+        // 🔹 ЗРОБИТИ ПЛОТ ВИБИРАНИМ (цілий об’єкт)
+        graph->setSelectable(QCP::stWhole); // як і було
+
+        auto onSelBool = [this, graph](bool selected){
+            if (auto *li = customPlot->legend->itemWithPlottable(graph))
+                li->setSelected(selected);
+
+            QPen p = graph->pen();
+            p.setWidth(selected ? 2 : 1);
+            graph->setPen(p);
+
+            customPlot->replot(QCustomPlot::rpQueuedReplot);
+        };
+
+        QObject::connect(
+            graph,
+            static_cast<void (QCPAbstractPlottable::*)(bool)>(&QCPAbstractPlottable::selectionChanged),
+            this,
+            onSelBool
+            );
+
+        // дані
         QVector<double> x, y;
         x.reserve(static_cast<int>(dataPtr.size()));
         y.reserve(static_cast<int>(dataPtr.size()));
@@ -240,6 +263,49 @@ void FlightChart::plotSelectedFields(const QStringList &keys)
     customPlot->legend->setVisible(true);
     customPlot->replot(QCustomPlot::rpQueuedReplot);
 }
+
+
+
+// void FlightChart::plotSelectedFields(const QStringList &keys)
+// {
+//     customPlot->clearGraphs();
+//     graphKeyByPtr.clear();
+
+//     for (const QString &key : keys)
+//     {
+//         auto spec = findFieldByKey(key);
+//         if (!spec) continue;
+
+//         QCPGraph *graph = customPlot->addGraph();
+//         graphKeyByPtr[graph] = spec->key;
+
+//         QString title = spec->label;
+//         if (!spec->unit.isEmpty()) title += " [" + spec->unit + "]";
+//         graph->setName(title);
+
+//         // ⬇️ ГОЛОВНЕ МІСЦЕ: беремо колір з override, якщо є
+//         const QColor baseColor = spec->color;
+//         const QColor useColor  = m_userColors.value(spec->key, baseColor);
+
+//         QPen pen(useColor);
+//         pen.setWidth(1);
+//         graph->setPen(pen);
+
+//         graph->setAdaptiveSampling(true);
+
+//         QVector<double> x, y;
+//         x.reserve(static_cast<int>(dataPtr.size()));
+//         y.reserve(static_cast<int>(dataPtr.size()));
+//         for (const auto &d : dataPtr) {
+//             x.append(d.time);
+//             y.append(spec->getter(d));
+//         }
+//         graph->setData(x, y);
+//     }
+
+//     customPlot->legend->setVisible(true);
+//     customPlot->replot(QCustomPlot::rpQueuedReplot);
+// }
 
 // void FlightChart::plotSelectedFields(const QStringList &keys)
 // {

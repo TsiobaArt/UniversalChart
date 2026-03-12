@@ -24,6 +24,7 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2022_64'
+          modules: 'qtpositioning qtserialport qtserialbus'
 
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1

@@ -1,0 +1,66 @@
+name: Windows Qt Build
+
+on:
+  push:
+    branches:
+      - main
+      - Ver_Qml_Control
+      - Ver_Qml_Panel
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2022_64'
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Set up Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: Configure CMake
+        run: cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+        shell: cmd
+
+      - name: Build
+        run: cmake --build build --config Release
+        shell: cmd
+
+      - name: Show build tree
+        run: dir build /s
+        shell: cmd
+
+      - name: Create deploy folder
+        run: |
+          mkdir deploy
+          copy build\UniversalChart.exe deploy\
+        shell: cmd
+
+      - name: Run windeployqt
+        run: |
+          windeployqt --release --qmldir . deploy\UniversalChart.exe
+        shell: cmd
+
+      - name: Archive build
+        run: |
+          powershell Compress-Archive -Path deploy\* -DestinationPath UniversalChart-windows.zip
+        shell: cmd
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UniversalChart-windows
+          path: UniversalChart-windows.zip

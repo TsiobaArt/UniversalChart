@@ -20,6 +20,8 @@ Item {
     signal exportImage(string path)
     signal deleteDataChart();
     signal autoZoomX();
+    signal importCSV();
+
     // alias для зміни тексту кнопки Live з C++
     // property alias liveText: liveBtnText.text
     property string currentMode: "drag"
@@ -59,7 +61,7 @@ Item {
     }
     ButtonGroup {
         id: modeGroup
-        buttons: [buttDrag.butt, buttZoomArea.butt]
+        buttons: [buttDrag.butt, buttZoomArea.butt, buttRuler.butt]
     }
 
     Row {
@@ -92,6 +94,20 @@ Item {
                 root.currentMode="rect";
                 root.modeChanged("rect"); }
         }
+
+        CustomButton_Image {
+            id: buttRuler
+            source: "qrc:/Icon/ruler.svg"
+            butt.checkable: true
+            tooltip: "Режим вимірювання (Ruler)"
+            tipsEnabled: buttToopTips.butt.checked ? true : false
+            butt.onClicked: {
+                root.currentMode="ruler";
+                root.modeChanged("ruler"); }
+
+
+        }
+
         CustomButton_Image {
             id: buttLive
             source: "qrc:/Icon/live.svg"
@@ -162,6 +178,20 @@ Item {
             }
 
         }
+
+
+        CustomButton_Image {
+            id: buttImportCsv
+            source: "qrc:/Icon/download.svg"
+            tipsEnabled: buttToopTips.butt.checked ? true : false
+            tooltip: "Завантажити обране до графіка"
+            butt.onClicked: {
+                root.importCSV();
+            }
+
+        }
+
+
         CustomButton_Image {
             id: buttSaveChart
             source: "qrc:/Icon/image.svg"

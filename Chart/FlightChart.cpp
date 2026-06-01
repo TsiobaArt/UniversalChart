@@ -94,6 +94,77 @@ FlightChart::FlightChart(QWidget *parent)
     connect(customPlot, &QCustomPlot::legendClick,
             this, &FlightChart::onLegendClick);
 
+
+
+
+    // ====== ruler // статичний підпис влівому куті
+    // Рух миші: оновлюємо лінійку/табличку
+    connect(customPlot, &QCustomPlot::mouseMove, this, [this](QMouseEvent* ev){
+        if (!m_rulerMode) return;
+        if (!customPlot->axisRect()->rect().contains(ev->pos())) return;
+
+        ensureRulerItems();
+
+        const double x0 = customPlot->xAxis->pixelToCoord(ev->pos().x());
+
+        // Вертикальна лінія x = x0 (нескінченна, але обрізається прямокутником осей)
+        m_rulerLine->point1->setType(QCPItemPosition::ptPlotCoords);
+        m_rulerLine->point2->setType(QCPItemPosition::ptPlotCoords);
+        m_rulerLine->point1->setCoords(x0, 0.0);
+        m_rulerLine->point2->setCoords(x0, 1.0);
+        m_rulerLine->setVisible(true);
+
+        // Текст у 2 колонки
+        // 1) X — першим рядком
+        QString txt = QString("x = %1\n").arg(x0, 0, 'f', 5);
+
+        // 2) Збираємо ім'я та значення, обчислюємо макс. довжину імені для вирівнювання
+        int maxLabelLen = 0;
+        struct Row { QString name; QString val; };
+        QVector<Row> rows;
+
+        for (int i = 0; i < customPlot->graphCount(); ++i) {
+            QCPGraph* g = customPlot->graph(i);
+            if (!g || !g->visible()) continue;
+
+            const QString name = g->name().isEmpty()
+                                     ? QString("Series %1").arg(i+1)
+                                     : g->name();
+
+            const double y = valueAtX(g, x0);
+            if (std::isnan(y)) continue;
+
+            const QString val = QString::number(y, 'f', 5);
+            rows.push_back({name, val});
+            maxLabelLen = qMax(maxLabelLen, name.length());
+        }
+
+        // 3) Формуємо рівні колонки (моношрифт!):
+        //    .arg(<str>, -width) — ліве вирівнювання по фіксованій ширині
+        for (const auto& r : rows) {
+            txt += QString("%1 : %2\n")
+            .arg(r.name, -maxLabelLen)
+                .arg(r.val);
+        }
+
+        m_rulerInfo->setText(txt.trimmed());
+        m_rulerInfo->setVisible(true);
+
+        customPlot->replot(QCustomPlot::rpQueuedReplot);
+    });
+
+
+
+    // ПКМ у режимі лінійки — прибрати підказку/лінію
+    connect(customPlot, &QCustomPlot::mousePress, this, [this](QMouseEvent* ev){
+        if (!m_rulerMode) return;
+        if (ev->button() == Qt::RightButton)
+            clearRuler();
+    });
+
+
+
+
 }
 
 FlightChart::~FlightChart() {}
@@ -470,4 +541,114 @@ void FlightChart::setSeriesColorByKey(const QString& key, const QColor& c)
             g->setPen(p);
         }
     }
+}
+
+
+
+// =========================ruler====================
+
+void FlightChart::setRulerMode(bool on)
+{
+    m_rulerMode = on;
+    ensureRulerItems();
+    if (!on) clearRuler();
+}
+
+void FlightChart::clearRuler()
+{
+    if (m_rulerLine) m_rulerLine->setVisible(false);
+    if (m_rulerInfo) m_rulerInfo->setVisible(false);
+    customPlot->replot(QCustomPlot::rpQueuedReplot);
+}
+void FlightChart::ensureRulerItems() // статичний підпис влівому куті
+{
+    // Вертикальна лінія: нескінченна пряма, відсічена прямокутником осей
+    if (!m_rulerLine) {
+        m_rulerLine = new QCPItemStraightLine(customPlot);
+        m_rulerLine->setClipAxisRect(customPlot->axisRect());
+        m_rulerLine->setPen(QPen(QColor(220,220,220), 1, Qt::DashLine));
+        m_rulerLine->setVisible(false);
+    }
+
+    // Плашка з текстом: закріплена в лівому верхньому куті прямокутника осей
+    if (!m_rulerInfo) {
+        m_rulerInfo = new QCPItemText(customPlot);
+        m_rulerInfo->setClipAxisRect(customPlot->axisRect());
+
+        // Якір — у лівому верхньому куті (0..1 — відносні координати прямокутника осей)
+        m_rulerInfo->position->setType(QCPItemPosition::ptAxisRectRatio);
+        m_rulerInfo->setPositionAlignment(Qt::AlignLeft | Qt::AlignTop);
+        m_rulerInfo->position->setCoords(0.01, 0.02); // невеликий відступ
+
+        // Стиль
+        m_rulerInfo->setPadding(QMargins(6,4,6,4));
+        m_rulerInfo->setBrush(QColor(0,0,0));        // напівпрозорий фон
+        m_rulerInfo->setPen(QPen(QColor(220,220,220)));  // рамка
+        m_rulerInfo->setFont(QFont("DejaVu Sans Mono", 9)); // моношрифт → рівні колонки
+        m_rulerInfo->setColor(Qt::white);                // білий текст
+        m_rulerInfo->setVisible(false);
+        m_rulerInfo->setSelectable(false);
+    }
+}
+
+
+// double FlightChart::valueAtX(QCPGraph *g, double x) const
+// {
+//     if (!g) return qQNaN();
+//     const auto &cont = *g->data();
+//     if (cont.isEmpty()) return qQNaN();
+
+//     // Знаходимо ітератор на перший елемент з key >= x
+//     auto itUpper = cont.findBegin(x, true);
+//     if (itUpper == cont.constBegin()) {
+//         return itUpper->value; // x лівіше всіх точок
+//     }
+//     if (itUpper == cont.constEnd()) {
+//         auto itLast = cont.constEnd(); --itLast;
+//         return itLast->value; // x правіше всіх точок
+//     }
+//     // Маємо (itLower, itUpper) для інтерполяції
+//     auto itLower = itUpper; --itLower;
+//     const double x1 = itLower->key, y1 = itLower->value;
+//     const double x2 = itUpper->key, y2 = itUpper->value;
+//     if (qFuzzyCompare(x1, x2)) return y1;
+//     const double t = (x - x1) / (x2 - x1);
+//     return y1 + t*(y2 - y1);
+// }
+
+
+double FlightChart::valueAtX(QCPGraph *g, double x) const
+{
+    if (!g) return qQNaN();
+
+    const auto &cont = *g->data();
+    if (cont.isEmpty()) return qQNaN();
+
+    auto first = cont.constBegin();
+    auto last  = cont.constEnd();
+    --last;
+
+    // x поза областю даних
+    if (x < first->key || x > last->key)
+        return qQNaN();
+
+    auto itUpper = cont.findBegin(x, true);
+
+    if (itUpper == cont.constBegin())
+        return itUpper->value;
+
+    auto itLower = itUpper;
+    --itLower;
+
+    const double x1 = itLower->key;
+    const double y1 = itLower->value;
+
+    const double x2 = itUpper->key;
+    const double y2 = itUpper->value;
+
+    if (qFuzzyCompare(x1, x2))
+        return y1;
+
+    const double t = (x - x1) / (x2 - x1);
+    return y1 + t * (y2 - y1);
 }

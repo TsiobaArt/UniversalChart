@@ -280,17 +280,24 @@ void ChartPanelWidget::autoZoom()
 void ChartPanelWidget::modeChange(QString mode)
 {
     if (mode == "drag") {
+        flightChart->setRulerMode(false);
         flightChart->getPlot()->setSelectionRectMode(QCP::srmNone);
-        flightChart->getPlot()->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes);
+        flightChart->getPlot()->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectPlottables);
     } else if (mode == "rect") {
+        flightChart->setRulerMode(false);
         flightChart->getPlot()->setSelectionRectMode(QCP::srmZoom);
         flightChart->getPlot()->setInteractions(QCP::iRangeZoom | QCP::iSelectPlottables | QCP::iSelectAxes);
-    } else {
+    } else if (mode == "ruler") {
+        flightChart->setRulerMode(true);
+        // дозволяємо скрол/зум, але без selectionRect:
         flightChart->getPlot()->setSelectionRectMode(QCP::srmNone);
-        flightChart->getPlot()->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes);
+        flightChart->getPlot()->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+    } else {
+        flightChart->setRulerMode(false);
+        flightChart->getPlot()->setSelectionRectMode(QCP::srmNone);
+        flightChart->getPlot()->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectAxes | QCP::iSelectPlottables);
     }
 }
-
 void ChartPanelWidget::liveButt(bool mode, int step)
 {
     flightChart->setLiveModeEnabled(mode, step);
@@ -655,4 +662,31 @@ void ChartPanelWidget::autoZoomX()
     }
 
     plot->replot(); // краще негайно
+}
+
+void ChartPanelWidget::importCSV()
+{
+
+    // 1. Діалог вибору CSV
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Виберіть CSV файл"),
+        QDir::currentPath(),           // ← стартова папка (тут буде твій build/)
+        tr("CSV Files (*.csv)")
+        );
+
+    if (filePath.isEmpty()) {
+        qWarning() << "importCSV: файл не вибрано";
+        return;
+    }
+
+    // 2. Завантаження вектора parametrs
+    std::vector<parametrs> d;
+    // if (!ResultExport::loadParametrsFromCsv(filePath, d)) {
+    //     qWarning() << "importCSV: не вдалося завантажити CSV";
+    //     return;
+    // }
+
+    setData(d);
+
 }

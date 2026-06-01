@@ -66,6 +66,7 @@ private slots:
     void deleteData();
     void toggleLeftPanel();
     void autoZoomX();
+    void importCSV();
 
 signals:
     void rightClickDrag();

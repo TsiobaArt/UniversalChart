@@ -40,6 +40,12 @@ public:
 
     const std::vector<parametrs>& rawData() const { return dataPtr; }
 
+
+
+    // ====== ruler ======
+    void setRulerMode(bool on);
+    void clearRuler();
+
 public slots:
     void onLegendClick(QCPLegend* legend, QCPAbstractLegendItem* item, QMouseEvent* ev);
 
@@ -59,6 +65,14 @@ private:
 
     // допоміжне: встановити колір графіка за ключем
     void setSeriesColorByKey(const QString& key, const QColor& c);
+
+
+    // ====== ruler ======
+    bool m_rulerMode = false;
+    QCPItemStraightLine* m_rulerLine = nullptr;
+    QCPItemText*         m_rulerInfo = nullptr;
+    void ensureRulerItems();
+    double valueAtX(QCPGraph* g, double x) const; // лінійна інтерполяція
 
 private:
     bool m_rmbDown = false;   // Права кнопка затиснута?

@@ -16,15 +16,15 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
                 this, &ChartPanelWidget::onCheckboxChanged);
     }
 
-    // --------------------------  test Даних
-    testTimer = new QTimer(this);
-    connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
-    testTimer->start(1); // 100 Гц
-    // --------------------------  test Даних
+    // // --------------------------  test Даних
+    // testTimer = new QTimer(this);
+    // connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
+    // testTimer->start(1); // 100 Гц
+    // // --------------------------  test Даних
 
-    // // ------------------------------  test Даних на кіклькість
-    // generateTestDataCount(120000);
-    // // ------------------------------ test Даних на кількість
+    // ------------------------------  test Даних на кіклькість
+    generateTestDataCount(120000);
+    // ------------------------------ test Даних на кількість
 
     QObject *toolbarRoot = m_qmlTopBar->rootObject();
     if (toolbarRoot) {
@@ -37,6 +37,7 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
         connect(toolbarRoot, SIGNAL(exportImage(QString)), this, SLOT(exportImage(QString)),  Qt::UniqueConnection);
         connect(toolbarRoot, SIGNAL(deleteDataChart()), this, SLOT(deleteData()),  Qt::UniqueConnection);
         connect(toolbarRoot, SIGNAL(autoZoomX()), this, SLOT(autoZoomX()),  Qt::UniqueConnection);
+        connect(toolbarRoot, SIGNAL(importCSV()), this, SLOT(importCSV()),  Qt::UniqueConnection);
 
     }
 
@@ -501,7 +502,7 @@ void ChartPanelWidget::exportToCsv(const QString& pathOrUrl)
     const auto dataCopy    = flightChart->rawData();   // КОПІЯ (auto робить копію)
 
     // 3) Готуємо воркер і потік
-    auto *exporter = new CsvExporter;   // QObject із сигналом exportFinished(...)
+    auto *exporter = new Csv_worker;   // QObject із сигналом exportFinished(...)
     auto *thread   = new QThread;
 
     exporter->moveToThread(thread);
@@ -514,12 +515,12 @@ void ChartPanelWidget::exportToCsv(const QString& pathOrUrl)
             });
 
     // Коректне завершення життєвого циклу
-    connect(exporter, &CsvExporter::exportFinished, thread, &QThread::quit);
+    connect(exporter, &Csv_worker::exportFinished, thread, &QThread::quit);
     connect(thread, &QThread::finished, exporter, &QObject::deleteLater);
     connect(thread, &QThread::finished, thread,   &QObject::deleteLater);
 
     // (опційно) лог/повідомлення
-    connect(exporter, &CsvExporter::exportFinished, this,
+    connect(exporter, &Csv_worker::exportFinished, this,
             [](bool ok, const QString& p){
                 qDebug() << "CSV export finished:" << ok << p;
             });
@@ -664,14 +665,40 @@ void ChartPanelWidget::autoZoomX()
     plot->replot(); // краще негайно
 }
 
+// void ChartPanelWidget::importCSV()
+// {
+
+//     // 1. Діалог вибору CSV
+//     QString filePath = QFileDialog::getOpenFileName(
+//         this,
+//         tr("Виберіть CSV файл"),
+//         QDir::currentPath(),           // ← стартова папка (тут буде твій build/)
+//         tr("CSV Files (*.csv)")
+//         );
+
+//     if (filePath.isEmpty()) {
+//         qWarning() << "importCSV: файл не вибрано";
+//         return;
+//     }
+
+//     // 2. Завантаження вектора parametrs
+//     std::vector<parametrs> d;
+//     // if (!ResultExport::loadParametrsFromCsv(filePath, d)) {
+//     //     qWarning() << "importCSV: не вдалося завантажити CSV";
+//     //     return;
+//     // }
+
+//     setData(d);
+
+// }
+
+
 void ChartPanelWidget::importCSV()
 {
-
-    // 1. Діалог вибору CSV
     QString filePath = QFileDialog::getOpenFileName(
         this,
         tr("Виберіть CSV файл"),
-        QDir::currentPath(),           // ← стартова папка (тут буде твій build/)
+        QDir::currentPath(),
         tr("CSV Files (*.csv)")
         );
 
@@ -680,13 +707,16 @@ void ChartPanelWidget::importCSV()
         return;
     }
 
-    // 2. Завантаження вектора parametrs
     std::vector<parametrs> d;
-    // if (!ResultExport::loadParametrsFromCsv(filePath, d)) {
-    //     qWarning() << "importCSV: не вдалося завантажити CSV";
-    //     return;
-    // }
+
+    Csv_worker csv;
+
+    if (!csv.importCsv(d, filePath)) {
+        qWarning() << "importCSV: не вдалося завантажити CSV";
+        return;
+    }
+
+    qDebug() << "CSV rows:" << d.size();
 
     setData(d);
-
 }

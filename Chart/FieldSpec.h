@@ -10,5 +10,8 @@ struct FieldSpec {
     QString unit;                     // одиниці (опційно)
     QColor  color;                    // колір лінії
     bool    defaultChecked = false;   // чи вмикати чекбокс за замовчуванням
+
     std::function<double(const T&)> getter; // функція діставання значення
+    std::function<void(T&, double)> setter;
+
 };

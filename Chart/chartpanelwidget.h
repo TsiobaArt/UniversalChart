@@ -22,7 +22,7 @@
 #include <QQmlContext>
 #include <QQuickItem>
 #include <qapplication.h>
-#include "csvexporter.h"
+#include "csv_worker.h"
 #include <QPropertyAnimation>
 #include <qtoolbutton.h>
 

@@ -591,32 +591,6 @@ void FlightChart::ensureRulerItems() // статичний підпис влів
     }
 }
 
-
-// double FlightChart::valueAtX(QCPGraph *g, double x) const
-// {
-//     if (!g) return qQNaN();
-//     const auto &cont = *g->data();
-//     if (cont.isEmpty()) return qQNaN();
-
-//     // Знаходимо ітератор на перший елемент з key >= x
-//     auto itUpper = cont.findBegin(x, true);
-//     if (itUpper == cont.constBegin()) {
-//         return itUpper->value; // x лівіше всіх точок
-//     }
-//     if (itUpper == cont.constEnd()) {
-//         auto itLast = cont.constEnd(); --itLast;
-//         return itLast->value; // x правіше всіх точок
-//     }
-//     // Маємо (itLower, itUpper) для інтерполяції
-//     auto itLower = itUpper; --itLower;
-//     const double x1 = itLower->key, y1 = itLower->value;
-//     const double x2 = itUpper->key, y2 = itUpper->value;
-//     if (qFuzzyCompare(x1, x2)) return y1;
-//     const double t = (x - x1) / (x2 - x1);
-//     return y1 + t*(y2 - y1);
-// }
-
-
 double FlightChart::valueAtX(QCPGraph *g, double x) const
 {
     if (!g) return qQNaN();

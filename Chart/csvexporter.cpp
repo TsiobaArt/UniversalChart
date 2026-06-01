@@ -23,14 +23,23 @@ bool CsvExporter::exportSelected(const std::vector<parametrs>& data,
                                  QChar sep)
 {
     std::vector<Column> cols;
-    // якщо потрібен час — розкоментуй:
-    // cols.push_back({"time", [](const parametrs& p){ return p.time; }});
+
+    cols.push_back({"time", [](const parametrs& p){ return p.time; }});
 
     for (const auto& k : keys) {
         if (auto spec = findFieldByKey(k)) {
-            cols.push_back({ makeHeader(spec->label, spec->unit), spec->getter });
+            if (spec->key == "time") continue;
+            cols.push_back({ spec->key, spec->getter });
         }
     }
+
+    for (const auto& k : keys) {
+        if (auto spec = findFieldByKey(k)) {
+            cols.push_back({ spec->key, spec->getter });
+        }
+    }
+
+
     if (cols.empty()) {
         emit exportFinished(false, filePath);
         return false;
@@ -84,57 +93,3 @@ bool CsvExporter::exportSelected(const std::vector<parametrs>& data,
     emit exportFinished(true, filePath);
     return true;
 }
-
-// bool CsvExporter::exportSelected(const std::vector<parametrs>& data,
-//                                  const QStringList& keys,
-//                                  const QString& filePath,
-//                                  QChar sep)
-// {
-//     std::vector<Column> cols;
-//     // cols.push_back({"time", [](const parametrs& p){ return p.time; }});
-
-//     for (const auto& k : keys) {
-//         if (auto spec = findFieldByKey(k)) {
-//             QString header = spec->label;
-//             if (!spec->unit.isEmpty())
-//                 header += " [" + spec->unit + "]";   // <- зшиваємо label + unit в ОДИН заголовок
-//             cols.push_back({header, spec->getter});
-//         }
-//     }
-
-//     if (cols.size() <= 1) {
-//         emit exportFinished(false, filePath);
-//         return false;
-//     }
-
-//     std::ofstream file(filePath.toStdString(), std::ios::out | std::ios::trunc);
-//     if (!file.is_open()) {
-//         emit exportFinished(false, filePath);
-//         return false;
-//     }
-
-//     file.imbue(std::locale::classic());
-//     file << std::fixed << std::setprecision(6);
-
-//     const char csep = static_cast<char>(sep.unicode());
-
-//     // Заголовок
-//     for (size_t i = 0; i < cols.size(); ++i) {
-//         if (i) file << csep;
-//         file << cols[i].header.toStdString();
-//     }
-//     file << '\n';
-
-//     // Дані
-//     for (const auto& p : data) {
-//         for (size_t i = 0; i < cols.size(); ++i) {
-//             if (i) file << csep;
-//             file << cols[i].getter(p);
-//         }
-//         file << '\n';
-//     }
-
-//     file.close();
-//     emit exportFinished(true, filePath);
-//     return true;
-// }

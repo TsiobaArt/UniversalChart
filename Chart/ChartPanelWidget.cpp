@@ -10,13 +10,6 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     setMinimumSize(840, 600);   // мінімальний розмір вікна (ширина × висота)
     setupUi();                  // вся побудова GUI тут
     mLastReplot.start();
-
-    // for (auto it = checkboxes.begin(); it != checkboxes.end(); ++it) {
-    //     connect(it.value(), &QCheckBox::stateChanged,
-    //             this, &ChartPanelWidget::onCheckboxChanged);
-    // }
-
-
     for (auto it = checkboxes.begin(); it != checkboxes.end(); ++it) {
         const QString key = it.key();
         QCheckBox *cb = it.value();
@@ -25,13 +18,6 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
             flightChart->setFieldVisible(key, checked);
         });
     }
-
-    // // --------------------------  test Даних
-    // testTimer = new QTimer(this);
-    // connect(testTimer, &QTimer::timeout, this, &ChartPanelWidget::generateTestData);
-    // testTimer->start(1); // 100 Гц
-    // // --------------------------  test Даних
-
     // ------------------------------  test Даних на кіклькість
     generateTestDataCount(1000000);
     // ------------------------------ test Даних на кількість
@@ -606,20 +592,6 @@ void ChartPanelWidget::toggleLeftPanel()
     anim->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
-// void ChartPanelWidget::autoZoomX()
-// {
-//     QCustomPlot* plot = flightChart ? flightChart->getPlot() : nullptr;
-//     if (!plot || plot->graphCount() == 0)
-//         return;
-
-//     // Масштабуємо лише X-вісь для всіх графіків,
-//     // поточний діапазон Y НЕ чіпаємо.
-//     for (int i = 0; i < plot->graphCount(); ++i) {
-//         plot->graph(i)->rescaleKeyAxis(true); // true = враховувати лише видимі дані
-//     }
-
-//     plot->replot(QCustomPlot::rpQueuedReplot);
-// }
 void ChartPanelWidget::autoZoomX()
 {
     QCustomPlot* plot = flightChart ? flightChart->getPlot() : nullptr;
@@ -674,34 +646,6 @@ void ChartPanelWidget::autoZoomX()
 
     plot->replot(); // краще негайно
 }
-
-// void ChartPanelWidget::importCSV()
-// {
-
-//     // 1. Діалог вибору CSV
-//     QString filePath = QFileDialog::getOpenFileName(
-//         this,
-//         tr("Виберіть CSV файл"),
-//         QDir::currentPath(),           // ← стартова папка (тут буде твій build/)
-//         tr("CSV Files (*.csv)")
-//         );
-
-//     if (filePath.isEmpty()) {
-//         qWarning() << "importCSV: файл не вибрано";
-//         return;
-//     }
-
-//     // 2. Завантаження вектора parametrs
-//     std::vector<parametrs> d;
-//     // if (!ResultExport::loadParametrsFromCsv(filePath, d)) {
-//     //     qWarning() << "importCSV: не вдалося завантажити CSV";
-//     //     return;
-//     // }
-
-//     setData(d);
-
-// }
-
 
 void ChartPanelWidget::importCSV()
 {

@@ -560,6 +560,65 @@ void FlightChart::clearRuler()
     if (m_rulerInfo) m_rulerInfo->setVisible(false);
     customPlot->replot(QCustomPlot::rpQueuedReplot);
 }
+
+void FlightChart::setFieldVisible(const QString& key, bool visible)
+{
+    if (visible) {
+        for (int i = 0; i < customPlot->graphCount(); ++i) {
+            QCPGraph* g = customPlot->graph(i);
+            if (graphKeyByPtr.value(g) == key)
+                return;
+        }
+
+        auto spec = findFieldByKey(key);
+        if (!spec) return;
+
+        QCPGraph *graph = customPlot->addGraph();
+        graphKeyByPtr[graph] = spec->key;
+
+        QString title = spec->label;
+        if (!spec->unit.isEmpty())
+            title += " [" + spec->unit + "]";
+
+        graph->setName(title);
+
+        QColor useColor = m_userColors.value(spec->key, spec->color);
+
+        QPen pen(useColor);
+        pen.setWidth(1);
+        graph->setPen(pen);
+
+        graph->setAdaptiveSampling(true);
+        graph->setSelectable(QCP::stWhole);
+
+        QVector<double> x;
+        QVector<double> y;
+
+        x.reserve(static_cast<int>(dataPtr.size()));
+        y.reserve(static_cast<int>(dataPtr.size()));
+
+        for (const auto &d : dataPtr) {
+            x.append(d.time);
+            y.append(spec->getter(d));
+        }
+
+        graph->setData(x, y);
+    }
+    else {
+        for (int i = customPlot->graphCount() - 1; i >= 0; --i) {
+            QCPGraph* g = customPlot->graph(i);
+
+            if (graphKeyByPtr.value(g) == key) {
+                graphKeyByPtr.remove(g);
+                customPlot->removeGraph(g);
+                break;
+            }
+        }
+    }
+
+    customPlot->legend->setVisible(true);
+    customPlot->replot(QCustomPlot::rpQueuedReplot);
+}
 void FlightChart::ensureRulerItems() // статичний підпис влівому куті
 {
     // Вертикальна лінія: нескінченна пряма, відсічена прямокутником осей

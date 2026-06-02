@@ -11,9 +11,19 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     setupUi();                  // вся побудова GUI тут
     mLastReplot.start();
 
+    // for (auto it = checkboxes.begin(); it != checkboxes.end(); ++it) {
+    //     connect(it.value(), &QCheckBox::stateChanged,
+    //             this, &ChartPanelWidget::onCheckboxChanged);
+    // }
+
+
     for (auto it = checkboxes.begin(); it != checkboxes.end(); ++it) {
-        connect(it.value(), &QCheckBox::stateChanged,
-                this, &ChartPanelWidget::onCheckboxChanged);
+        const QString key = it.key();
+        QCheckBox *cb = it.value();
+
+        connect(cb, &QCheckBox::toggled, this, [this, key](bool checked) {
+            flightChart->setFieldVisible(key, checked);
+        });
     }
 
     // // --------------------------  test Даних
@@ -23,7 +33,7 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     // // --------------------------  test Даних
 
     // ------------------------------  test Даних на кіклькість
-    generateTestDataCount(120000);
+    generateTestDataCount(1000000);
     // ------------------------------ test Даних на кількість
 
     QObject *toolbarRoot = m_qmlTopBar->rootObject();

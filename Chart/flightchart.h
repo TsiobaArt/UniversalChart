@@ -46,6 +46,11 @@ public:
     void setRulerMode(bool on);
     void clearRuler();
 
+
+
+    // =======скидання одного чекбоксу а не всіх ===============
+    void setFieldVisible(const QString& key, bool visible);
+
 public slots:
     void onLegendClick(QCPLegend* legend, QCPAbstractLegendItem* item, QMouseEvent* ev);
 

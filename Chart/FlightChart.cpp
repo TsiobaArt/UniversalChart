@@ -532,39 +532,85 @@ void FlightChart::ensureRulerItems() // статичний підпис влів
         m_rulerInfo->setSelectable(false);
     }
 }
-
 double FlightChart::valueAtX(QCPGraph *g, double x) const
 {
-    if (!g) return qQNaN();
-
-    const auto &cont = *g->data();
-    if (cont.isEmpty()) return qQNaN();
-
-    auto first = cont.constBegin();
-    auto last  = cont.constEnd();
-    --last;
-
-    // x поза областю даних
-    if (x < first->key || x > last->key)
+    if (!g)
         return qQNaN();
 
-    auto itUpper = cont.findBegin(x, true);
+    auto data = g->data();
+    if (!data || data->isEmpty())
+        return qQNaN();
 
-    if (itUpper == cont.constBegin())
-        return itUpper->value;
+    auto it = data->constBegin();
+    auto end = data->constEnd();
 
-    auto itLower = itUpper;
-    --itLower;
+    // Якщо x лівіше першої точки
+    if (x < it->key)
+        return qQNaN();
 
-    const double x1 = itLower->key;
-    const double y1 = itLower->value;
+    auto prev = it;
+    ++it;
 
-    const double x2 = itUpper->key;
-    const double y2 = itUpper->value;
+    // Якщо в графіку лише одна точка
+    if (it == end) {
+        if (qAbs(prev->key - x) < 1e-9)
+            return prev->value;
 
-    if (qFuzzyCompare(x1, x2))
-        return y1;
+        return qQNaN();
+    }
 
-    const double t = (x - x1) / (x2 - x1);
-    return y1 + t * (y2 - y1);
+    for (; it != end; ++it) {
+        const double x1 = prev->key;
+        const double y1 = prev->value;
+
+        const double x2 = it->key;
+        const double y2 = it->value;
+
+        if (x >= x1 && x <= x2) {
+            if (qAbs(x2 - x1) < 1e-12)
+                return y1;
+
+            const double k = (x - x1) / (x2 - x1);
+            return y1 + k * (y2 - y1);
+        }
+
+        prev = it;
+    }
+
+    return qQNaN();
 }
+// double FlightChart::valueAtX(QCPGraph *g, double x) const
+// {
+//     if (!g) return qQNaN();
+
+//     const auto &cont = *g->data();
+//     if (cont.isEmpty()) return qQNaN();
+
+//     auto first = cont.constBegin();
+//     auto last  = cont.constEnd();
+//     --last;
+
+//     // x поза областю даних
+//     if (x < first->key || x > last->key)
+//         return qQNaN();
+
+//     auto itUpper = cont.findBegin(x, true);
+
+//     if (itUpper == cont.constBegin())
+//         return itUpper->value;
+
+//     auto itLower = itUpper;
+//     --itLower;
+
+//     const double x1 = itLower->key;
+//     const double y1 = itLower->value;
+
+//     const double x2 = itUpper->key;
+//     const double y2 = itUpper->value;
+
+//     if (qFuzzyCompare(x1, x2))
+//         return y1;
+
+//     const double t = (x - x1) / (x2 - x1);
+//     return y1 + t * (y2 - y1);
+// }

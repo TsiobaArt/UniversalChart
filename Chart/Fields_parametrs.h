@@ -85,11 +85,11 @@ inline const std::vector<FieldSpec<parametrs>>& PARAM_FIELDS()
                                                    [](const auto& d){ return qRadiansToDegrees(d.psi); },
                                                    [](auto& d, double v){ d.psi = qDegreesToRadians(v); }},
 
-                                                  {"teta",    u8"θ (тангаж), °",         "deg", niceColor(), true,
+                                                  {"teta",    u8"θ (тангаж), °",         "deg", niceColor(), false,
                                                    [](const auto& d){ return qRadiansToDegrees(d.teta); },
                                                    [](auto& d, double v){ d.teta = qDegreesToRadians(v); }},
 
-                                                  {"gamma",   u8"φ (крен), °",           "deg", niceColor(), true,
+                                                  {"gamma",   u8"φ (крен), °",           "deg", niceColor(), false,
                                                    [](const auto& d){ return qRadiansToDegrees(d.gamma); },
                                                    [](auto& d, double v){ d.gamma = qDegreesToRadians(v); }},
 

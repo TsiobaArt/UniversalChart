@@ -4,6 +4,7 @@
 #include "qcustomplot.h"
 #include <QQmlContext>
 #include <QQuickWidget>
+
 ChartPanelWidget::ChartPanelWidget(QWidget *parent)
     : QWidget(parent)
 {

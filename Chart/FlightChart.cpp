@@ -4,7 +4,8 @@
 #include <QBrush>
 #include "Fields_parametrs.h"
 #include "Fields_lookup.h"
-
+#include <QTimer>
+#include <algorithm>
 FlightChart::FlightChart(QWidget *parent)
     : QWidget{parent}
 {
@@ -162,9 +163,17 @@ FlightChart::FlightChart(QWidget *parent)
             clearRuler();
     });
 
+    connect(customPlot, &QCustomPlot::mouseRelease,
+            this, [this](QMouseEvent* ev) {
+                if (ev->button() == Qt::LeftButton && m_lodEnabled && !m_liveModeEnabled) {
+                    scheduleLodRebuild();
+                }
+            });
 
-
-
+    connect(customPlot, &QCustomPlot::mouseWheel,
+            this, [this](QWheelEvent*) {
+                scheduleLodRebuild();
+            });
 }
 
 FlightChart::~FlightChart() {}
@@ -241,9 +250,16 @@ void FlightChart::clearData()
     customPlot->replot(QCustomPlot::rpQueuedReplot);
 }
 
-void FlightChart::setDataChart(std::vector<parametrs> &data) {
-    dataPtr.clear();
+void FlightChart::setDataChart(std::vector<parametrs> &data)
+{
     dataPtr = data;
+
+    if (!dataPtr.empty()) {
+        customPlot->xAxis->setRange(dataPtr.front().time,
+                                    dataPtr.back().time);
+    }
+
+    rebuildVisibleLod();
 }
 
 void FlightChart::appendDataChart(parametrs &data)
@@ -320,15 +336,10 @@ void FlightChart::plotSelectedFields(const QStringList &keys)
             onSelBool
             );
 
-        // дані
-        QVector<double> x, y;
-        x.reserve(static_cast<int>(dataPtr.size()));
-        y.reserve(static_cast<int>(dataPtr.size()));
-        for (const auto &d : dataPtr) {
-            x.append(d.time);
-            y.append(spec->getter(d));
-        }
-        graph->setData(x, y);
+        fillGraphLod(graph,
+                     spec->key,
+                     customPlot->xAxis->range().lower,
+                     customPlot->xAxis->range().upper);
     }
 
     customPlot->legend->setVisible(true);
@@ -474,18 +485,10 @@ void FlightChart::setFieldVisible(const QString& key, bool visible)
         graph->setAdaptiveSampling(true);
         graph->setSelectable(QCP::stWhole);
 
-        QVector<double> x;
-        QVector<double> y;
-
-        x.reserve(static_cast<int>(dataPtr.size()));
-        y.reserve(static_cast<int>(dataPtr.size()));
-
-        for (const auto &d : dataPtr) {
-            x.append(d.time);
-            y.append(spec->getter(d));
-        }
-
-        graph->setData(x, y);
+        fillGraphLod(graph,
+                     spec->key,
+                     customPlot->xAxis->range().lower,
+                     customPlot->xAxis->range().upper);
     }
     else {
         for (int i = customPlot->graphCount() - 1; i >= 0; --i) {
@@ -500,7 +503,7 @@ void FlightChart::setFieldVisible(const QString& key, bool visible)
     }
 
     customPlot->legend->setVisible(true);
-    customPlot->replot(QCustomPlot::rpQueuedReplot);
+    rebuildVisibleLod();
 }
 void FlightChart::ensureRulerItems() // статичний підпис влівому куті
 {
@@ -614,3 +617,201 @@ double FlightChart::valueAtX(QCPGraph *g, double x) const
 //     const double t = (x - x1) / (x2 - x1);
 //     return y1 + t * (y2 - y1);
 // }
+
+void FlightChart::setLodEnabled(bool on)
+{
+    m_lodEnabled = on;
+    rebuildVisibleLod();
+}
+
+void FlightChart::setLodPointLimitPerGraph(int points)
+{
+    m_lodPointLimitPerGraph = qMax(100, points);
+    rebuildVisibleLod();
+}
+
+void FlightChart::scheduleLodRebuild()
+{
+    if (m_lodRebuildScheduled)
+        return;
+
+    m_lodRebuildScheduled = true;
+
+    QTimer::singleShot(50, this, [this]() {
+        m_lodRebuildScheduled = false;
+        rebuildVisibleLod();
+    });
+}
+void FlightChart::rebuildVisibleLod()
+{
+    if (!customPlot || dataPtr.empty())
+        return;
+
+    const double xMin = customPlot->xAxis->range().lower;
+    const double xMax = customPlot->xAxis->range().upper;
+
+    for (int i = 0; i < customPlot->graphCount(); ++i) {
+        QCPGraph* graph = customPlot->graph(i);
+        if (!graph)
+            continue;
+
+        const QString key = graphKeyByPtr.value(graph);
+        if (key.isEmpty())
+            continue;
+
+        fillGraphLod(graph, key, xMin, xMax);
+    }
+
+    customPlot->replot(QCustomPlot::rpQueuedReplot);
+}
+
+void FlightChart::fillGraphLod(QCPGraph* graph,
+                               const QString& key,
+                               double xMin,
+                               double xMax)
+{
+    auto spec = findFieldByKey(key);
+    if (!spec || !graph)
+        return;
+
+    QVector<double> x;
+    QVector<double> y;
+
+    if (dataPtr.empty()) {
+        graph->setData(x, y);
+        return;
+    }
+
+    auto firstIt = std::lower_bound(
+        dataPtr.begin(),
+        dataPtr.end(),
+        xMin,
+        [](const parametrs& p, double value) {
+            return p.time < value;
+        });
+
+    auto lastIt = std::upper_bound(
+        dataPtr.begin(),
+        dataPtr.end(),
+        xMax,
+        [](double value, const parametrs& p) {
+            return value < p.time;
+        });
+
+    if (firstIt == dataPtr.end() || firstIt >= lastIt) {
+        graph->setData(x, y);
+        return;
+    }
+
+    const int first = int(std::distance(dataPtr.begin(), firstIt));
+    const int lastExclusive = int(std::distance(dataPtr.begin(), lastIt));
+    const int visibleCount = lastExclusive - first;
+
+    if (visibleCount <= 0) {
+        graph->setData(x, y);
+        return;
+    }
+
+    // if (!m_lodEnabled || visibleCount <= m_lodPointLimitPerGraph) { // Варіант алгоритму min max
+    //     x.reserve(visibleCount);
+    //     y.reserve(visibleCount);
+
+    //     for (int i = first; i < lastExclusive; ++i) {
+    //         x.append(dataPtr[i].time);
+    //         y.append(spec->getter(dataPtr[i]));
+    //     }
+
+    //     graph->setData(x, y);
+    //     return;
+    // }
+
+    // const int bucketCount = qMax(1, m_lodPointLimitPerGraph / 2);
+    // const double bucketSize = double(visibleCount) / double(bucketCount);
+
+    // x.reserve(bucketCount * 2);
+    // y.reserve(bucketCount * 2);
+
+    // for (int b = 0; b < bucketCount; ++b) {
+    //     const int i0 = first + int(b * bucketSize);
+    //     int i1 = first + int((b + 1) * bucketSize) - 1;
+
+    //     if (i0 >= lastExclusive)
+    //         break;
+
+    //     if (i1 >= lastExclusive)
+    //         i1 = lastExclusive - 1;
+
+    //     int minIndex = i0;
+    //     int maxIndex = i0;
+
+    //     double minValue = spec->getter(dataPtr[i0]);
+    //     double maxValue = minValue;
+
+    //     for (int i = i0 + 1; i <= i1; ++i) {
+    //         const double v = spec->getter(dataPtr[i]);
+
+    //         if (v < minValue) {
+    //             minValue = v;
+    //             minIndex = i;
+    //         }
+
+    //         if (v > maxValue) {
+    //             maxValue = v;
+    //             maxIndex = i;
+    //         }
+    //     }
+
+    //     if (minIndex <= maxIndex) {
+    //         x.append(dataPtr[minIndex].time);
+    //         y.append(minValue);
+
+    //         if (maxIndex != minIndex) {
+    //             x.append(dataPtr[maxIndex].time);
+    //             y.append(maxValue);
+    //         }
+    //     } else {
+    //         x.append(dataPtr[maxIndex].time);
+    //         y.append(maxValue);
+
+    //         x.append(dataPtr[minIndex].time);
+    //         y.append(minValue);
+    //     }
+    // }
+
+    // graph->setData(x, y);
+
+    if (!m_lodEnabled || visibleCount <= m_lodPointLimitPerGraph) { // ==== Варіант тупої фітраціх N
+        x.reserve(visibleCount);
+        y.reserve(visibleCount);
+
+        for (int i = first; i < lastExclusive; ++i) {
+            x.append(dataPtr[i].time);
+            y.append(spec->getter(dataPtr[i]));
+        }
+
+        graph->setData(x, y);
+        return;
+    }
+
+    // Просте швидке прорідження: кожна N-та точка
+    const int step = qMax(1, visibleCount / m_lodPointLimitPerGraph);
+
+    const int approxCount = visibleCount / step + 1;
+    x.reserve(approxCount);
+    y.reserve(approxCount);
+
+    for (int i = first; i < lastExclusive; i += step) {
+        x.append(dataPtr[i].time);
+        y.append(spec->getter(dataPtr[i]));
+    }
+
+    // Обов'язково додати останню точку видимого діапазону
+    const int lastIndex = lastExclusive - 1;
+    if (!x.isEmpty() && x.last() != dataPtr[lastIndex].time) {
+        x.append(dataPtr[lastIndex].time);
+        y.append(spec->getter(dataPtr[lastIndex]));
+    }
+
+    graph->setData(x, y);
+
+}

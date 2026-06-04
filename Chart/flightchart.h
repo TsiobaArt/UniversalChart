@@ -51,6 +51,11 @@ public:
     // =======скидання одного чекбоксу а не всіх ===============
     void setFieldVisible(const QString& key, bool visible);
 
+
+    void setLodEnabled(bool on);
+    void setLodPointLimitPerGraph(int points);
+    void rebuildVisibleLod();
+
 public slots:
     void onLegendClick(QCPLegend* legend, QCPAbstractLegendItem* item, QMouseEvent* ev);
 
@@ -78,9 +83,20 @@ private:
     QCPItemText*         m_rulerInfo = nullptr;
     void ensureRulerItems();
     double valueAtX(QCPGraph* g, double x) const; // лінійна інтерполяція
-
-private:
     bool m_rmbDown = false;   // Права кнопка затиснута?
+
+    bool m_lodEnabled = true;
+    int  m_lodPointLimitPerGraph = 100000;
+    bool m_lodRebuildScheduled = false;
+
+    void scheduleLodRebuild();
+
+    void fillGraphLod(QCPGraph* graph,
+                      const QString& key,
+                      double xMin,
+                      double xMax);
+
+
 signals:
     void cursorPosChanged(double x, double y, bool inside);
     void rightClickInDragMode();

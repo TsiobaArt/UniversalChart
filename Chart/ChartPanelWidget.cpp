@@ -20,7 +20,7 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
         });
     }
     // ------------------------------  test Даних на кіклькість
-    generateTestDataCount(3000000);
+    generateTestDataCount(625000);
     // ------------------------------ test Даних на кількість
 
     QObject *toolbarRoot = m_qmlTopBar->rootObject();

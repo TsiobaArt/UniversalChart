@@ -19,7 +19,7 @@ ChartPanelWidget::ChartPanelWidget(QWidget *parent)
         });
     }
     // ------------------------------  test Даних на кіклькість
-    generateTestDataCount(625000);
+    generateTestDataCount(1000000);
     // ------------------------------ test Даних на кількість
 
     QObject *toolbarRoot = m_qmlTopBar->rootObject();
@@ -163,78 +163,276 @@ void ChartPanelWidget::generateTestData()
 
     t += dt;
 }
-
 void ChartPanelWidget::generateTestDataCount(int count)
 {
     if (count <= 0) return;
 
-    // Якщо твій тестовий таймер крутиться — зупинимо, щоб не мішався
     const bool timerWasRunning = (testTimer && testTimer->isActive());
     if (timerWasRunning) testTimer->stop();
 
-    // Якщо графіки ще не створені (жоден чекбокс не вибраний) — увімкнемо дефолтні
     if (flightChart->getPlot()->graphCount() == 0) {
         onCheckboxChanged();
     }
 
-    auto rnd = [](double a, double b){
+    auto rnd = [](double a, double b) {
         return a + (b - a) * QRandomGenerator::global()->generateDouble();
     };
 
-    // Генеруємо і додаємо БЕЗ проміжних перепобудов
+    auto noise = [&](double amp) {
+        return rnd(-amp, amp);
+    };
+
+    constexpr double dt = 0.001;          // 1 ms
+    constexpr double twoPi = 2.0 * M_PI;
+
+    // Початкові координати
+    double x = 0.0;
+    double y = 1000.0;   // висота, м
+    double z = 0.0;
+
+    // Індивідуальні фази, щоб графіки не були однакові
+    const double phase1 = rnd(0.0, twoPi);
+    const double phase2 = rnd(0.0, twoPi);
+    const double phase3 = rnd(0.0, twoPi);
+
     for (int i = 0; i < count; ++i) {
         parametrs p{};
 
-        p.time =i * 0.001;
-        p.v_ground    = rnd(200.0, 250.0);
-        p.vx          = p.v_ground + rnd(-2.0, 2.0);
-        p.vy          = rnd(-5.0, 5.0);
-        p.vz          = rnd(-2.0, 2.0);
+        const double t = i * dt;
 
-        p.wx          = qDegreesToRadians(rnd(-2.0, 2.0));
-        p.wy          = qDegreesToRadians(rnd(-2.0, 2.0));
-        p.wz          = qDegreesToRadians(rnd(-2.0, 2.0));
+        // ==========================
+        // Швидкість
+        // ==========================
+        p.time = t;
 
-        p.angleWx     = rnd(-1.0, 1.0);
-        p.angleWy     = rnd(-1.0, 1.0);
-        p.angleWz     = rnd(-1.0, 1.0);
+        p.v_ground =
+            230.0
+            + 12.0 * std::sin(twoPi * 0.15 * t + phase1)
+            + 4.0  * std::sin(twoPi * 1.20 * t + phase2)
+            + noise(0.8);
 
-        p.teta        = qDegreesToRadians(rnd(-10.0, 10.0));
-        p.gamma       = qDegreesToRadians(rnd(-30.0, 30.0));
-        p.psi         = qDegreesToRadians(rnd(0.0, 360.0));
+        p.vx = p.v_ground * std::cos(qDegreesToRadians(3.0)) + noise(0.5);
+        p.vy =
+            2.0 * std::sin(twoPi * 0.25 * t + phase2)
+            + 0.5 * std::sin(twoPi * 2.00 * t)
+            + noise(0.2);
 
-        p.alfa        = qDegreesToRadians(rnd(-2.0, 8.0));
-        p.beta        = qDegreesToRadians(rnd(-3.0, 3.0));
+        p.vz =
+            4.0 * std::sin(twoPi * 0.18 * t + phase3)
+            + noise(0.3);
 
-        p.machNumber  = rnd(0.6, 0.9);
-        p.altitude_wgs= rnd(100.0, 200.0);
+        // ==========================
+        // Кутові швидкості, рад/с
+        // ==========================
+        p.wx = qDegreesToRadians(
+            1.5 * std::sin(twoPi * 0.9 * t + phase1) + noise(0.1)
+            );
 
-        p.nx          = rnd(-0.2, 0.2);
-        p.ny          = rnd(-0.2, 0.2);
-        p.nz          = 1.0 + rnd(-0.05, 0.05);
+        p.wy = qDegreesToRadians(
+            1.0 * std::sin(twoPi * 0.7 * t + phase2) + noise(0.1)
+            );
 
-        p.mx          = rnd(-100.0, 100.0);
-        p.my          = rnd(-100.0, 100.0);
-        p.mz          = rnd(-100.0, 100.0);
+        p.wz = qDegreesToRadians(
+            2.0 * std::sin(twoPi * 0.4 * t + phase3) + noise(0.15)
+            );
 
-        p.deltaChannel1 = rnd(-5.0, 5.0);
-        p.deltaChannel2 = rnd(-5.0, 5.0);
-        p.deltaElerons  = rnd(-5.0, 5.0);
+        p.angleWx = qRadiansToDegrees(p.wx);
+        p.angleWy = qRadiansToDegrees(p.wy);
+        p.angleWz = qRadiansToDegrees(p.wz);
 
-        // координати/масо-тяга — як хочеш
-        p.xg += rnd(-3.0, 3.0);
-        p.yg += rnd(-3.0, 3.0);
-        p.zg += rnd(-1.0, 1.0);
-        p.mass  = rnd(500.0, 600.0);
-        p.trust = rnd(2000.0, 3000.0);
+        // ==========================
+        // Кути орієнтації
+        // ==========================
+        p.teta = qDegreesToRadians(
+            -5.0
+            + 3.0 * std::sin(twoPi * 0.08 * t + phase1)
+            + noise(0.05)
+            );
 
-        // Додаємо прямо у FlightChart, БЕЗ scheduleReplot() з Panel
+        p.gamma = qDegreesToRadians(
+            20.0 * std::sin(twoPi * 0.12 * t + phase2)
+            + noise(0.15)
+            );
+
+        p.psi = qDegreesToRadians(
+            std::fmod(90.0 + 4.0 * t + 8.0 * std::sin(twoPi * 0.03 * t), 360.0)
+            );
+
+        // ==========================
+        // Аеродинамічні кути
+        // ==========================
+        p.alfa = qDegreesToRadians(
+            4.0
+            + 2.0 * std::sin(twoPi * 0.35 * t + phase1)
+            + noise(0.1)
+            );
+
+        p.beta = qDegreesToRadians(
+            1.5 * std::sin(twoPi * 0.45 * t + phase2)
+            + noise(0.08)
+            );
+
+        // ==========================
+        // Mach і висота
+        // ==========================
+        p.machNumber =
+            0.72
+            + 0.04 * std::sin(twoPi * 0.10 * t + phase3)
+            + noise(0.003);
+
+        p.altitude_wgs =
+            y
+            + 80.0 * std::sin(twoPi * 0.02 * t + phase1)
+            + 10.0 * std::sin(twoPi * 0.25 * t)
+            + noise(1.0);
+
+        // ==========================
+        // Перевантаження
+        // ==========================
+        p.nx =
+            0.15 * std::sin(twoPi * 0.6 * t + phase1)
+            + noise(0.01);
+
+        p.ny =
+            0.10 * std::sin(twoPi * 0.5 * t + phase2)
+            + noise(0.01);
+
+        p.nz =
+            1.0
+            + 0.35 * std::sin(twoPi * 0.35 * t + phase3)
+            + noise(0.02);
+
+        // ==========================
+        // Моменти
+        // ==========================
+        p.mx =
+            40.0 * std::sin(twoPi * 0.7 * t + phase1)
+            + 10.0 * std::sin(twoPi * 2.5 * t)
+            + noise(3.0);
+
+        p.my =
+            35.0 * std::sin(twoPi * 0.5 * t + phase2)
+            + noise(3.0);
+
+        p.mz =
+            50.0 * std::sin(twoPi * 0.4 * t + phase3)
+            + noise(4.0);
+
+        // ==========================
+        // Канали керування
+        // ==========================
+        p.deltaChannel1 =
+            5.0 * std::sin(twoPi * 0.6 * t + phase1)
+            + noise(0.2);
+
+        p.deltaChannel2 =
+            4.0 * std::sin(twoPi * 0.45 * t + phase2)
+            + noise(0.2);
+
+        p.deltaElerons =
+            7.0 * std::sin(twoPi * 0.8 * t + phase3)
+            + noise(0.25);
+
+        // ==========================
+        // Координати
+        // ==========================
+        x += p.vx * dt;
+        y += p.vy * dt;
+        z += p.vz * dt;
+
+        p.xg = x;
+        p.yg = y;
+        p.zg = z;
+
+        // ==========================
+        // Маса і тяга
+        // ==========================
+        p.mass =
+            600.0
+            - 0.02 * t
+            + noise(0.02);
+
+        p.trust =
+            2500.0
+            + 250.0 * std::sin(twoPi * 0.12 * t + phase1)
+            + noise(20.0);
+
         flightChart->appendDataChart(p);
     }
 
-    // Один фінальний реплот
     flightChart->getPlot()->replot(QCustomPlot::rpQueuedReplot);
 }
+// void ChartPanelWidget::generateTestDataCount(int count)
+// {
+//     if (count <= 0) return;
+
+//     // Якщо твій тестовий таймер крутиться — зупинимо, щоб не мішався
+//     const bool timerWasRunning = (testTimer && testTimer->isActive());
+//     if (timerWasRunning) testTimer->stop();
+
+//     // Якщо графіки ще не створені (жоден чекбокс не вибраний) — увімкнемо дефолтні
+//     if (flightChart->getPlot()->graphCount() == 0) {
+//         onCheckboxChanged();
+//     }
+
+//     auto rnd = [](double a, double b){
+//         return a + (b - a) * QRandomGenerator::global()->generateDouble();
+//     };
+
+//     // Генеруємо і додаємо БЕЗ проміжних перепобудов
+//     for (int i = 0; i < count; ++i) {
+//         parametrs p{};
+
+//         p.time =i * 0.001;
+//         p.v_ground    = rnd(200.0, 250.0);
+//         p.vx          = p.v_ground + rnd(-2.0, 2.0);
+//         p.vy          = rnd(-5.0, 5.0);
+//         p.vz          = rnd(-2.0, 2.0);
+
+//         p.wx          = qDegreesToRadians(rnd(-2.0, 2.0));
+//         p.wy          = qDegreesToRadians(rnd(-2.0, 2.0));
+//         p.wz          = qDegreesToRadians(rnd(-2.0, 2.0));
+
+//         p.angleWx     = rnd(-1.0, 1.0);
+//         p.angleWy     = rnd(-1.0, 1.0);
+//         p.angleWz     = rnd(-1.0, 1.0);
+
+//         p.teta        = qDegreesToRadians(rnd(-10.0, 10.0));
+//         p.gamma       = qDegreesToRadians(rnd(-30.0, 30.0));
+//         p.psi         = qDegreesToRadians(rnd(0.0, 360.0));
+
+//         p.alfa        = qDegreesToRadians(rnd(-2.0, 8.0));
+//         p.beta        = qDegreesToRadians(rnd(-3.0, 3.0));
+
+//         p.machNumber  = rnd(0.6, 0.9);
+//         p.altitude_wgs= rnd(100.0, 200.0);
+
+//         p.nx          = rnd(-0.2, 0.2);
+//         p.ny          = rnd(-0.2, 0.2);
+//         p.nz          = 1.0 + rnd(-0.05, 0.05);
+
+//         p.mx          = rnd(-100.0, 100.0);
+//         p.my          = rnd(-100.0, 100.0);
+//         p.mz          = rnd(-100.0, 100.0);
+
+//         p.deltaChannel1 = rnd(-5.0, 5.0);
+//         p.deltaChannel2 = rnd(-5.0, 5.0);
+//         p.deltaElerons  = rnd(-5.0, 5.0);
+
+//         // координати/масо-тяга — як хочеш
+//         p.xg += rnd(-3.0, 3.0);
+//         p.yg += rnd(-3.0, 3.0);
+//         p.zg += rnd(-1.0, 1.0);
+//         p.mass  = rnd(500.0, 600.0);
+//         p.trust = rnd(2000.0, 3000.0);
+
+//         // Додаємо прямо у FlightChart, БЕЗ scheduleReplot() з Panel
+//         flightChart->appendDataChart(p);
+//     }
+
+//     // Один фінальний реплот
+//     flightChart->getPlot()->replot(QCustomPlot::rpQueuedReplot);
+// }
 
 
 QStringList ChartPanelWidget::selectedKeys() const
